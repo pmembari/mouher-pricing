@@ -37,21 +37,18 @@
 <h2>☁️ ذخیره و اشتراک‌گذاری</h2>
 <label>🏪 نام فروشگاه<input id="shopName" type="text" maxlength="70" value="Mouher" placeholder="Mouher"></label>
 <p class="hint">فایل‌ها فقط وقتی خودتان انتخاب کنید از گوشی خارج می‌شوند.</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-top:15px">
-<div style="border:1px solid #d8e8d8;background:white;border-radius:18px;padding:17px">
-<div style="font-size:32px" aria-hidden="true">📱</div><h3>با برنامه گوشی</h3>
-<p class="hint">فایل را انتخاب کنید و از منوی اشتراک، Google Drive را بزنید.</p>
-<button id="shareCsv" class="primary" style="width:100%">📤 اشتراک لیست قیمت</button>
-<button id="shareBackup" style="width:100%;margin-top:8px">📦 اشتراک پشتیبان</button>
+<div style="background:white;border:1px solid #d8e8d8;border-radius:18px;padding:18px;margin-top:15px">
+<div style="font-size:36px" aria-hidden="true">🌐 ☁️</div>
+<h3>ذخیره در Google Drive با مرورگر</h3>
+<p class="hint">با حساب گوگل وارد شوید؛ سپس لیست قیمت در پوشه نام فروشگاه / سال / ماه / روز ذخیره می‌شود.</p>
+<button id="driveCsv" class="primary" style="width:100%">ورود به گوگل و ذخیره لیست قیمت</button>
+<div class="actions"><button id="driveBackup">ذخیره پشتیبان</button><button id="driveImages">ذخیره عکس‌ها</button></div>
+<p id="driveStatus" role="status" aria-live="polite" class="hint">آپلود فقط پس از اجازه شما انجام می‌شود.</p>
 </div>
-<div style="border:1px solid #d8e8d8;background:white;border-radius:18px;padding:17px">
-<div style="font-size:32px" aria-hidden="true">🌐</div><h3>با مرورگر</h3>
-<p class="hint">فایل را بگیرید و در سایت Google Drive بارگذاری کنید.</p>
-<button id="webCsvDownload" class="primary" style="width:100%">⬇️ دریافت لیست قیمت</button>
-<button id="webBackupDownload" style="width:100%;margin-top:8px">📦 دریافت پشتیبان</button>
-<button id="webImagesDownload" style="width:100%;margin-top:8px">🖼️ دریافت عکس‌ها</button>
-<a href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;margin-top:12px;color:#0f4d3b;font-weight:750">بازکردن Google Drive ↗</a>
-</div></div>
+<details style="margin-top:15px"><summary style="font-size:13px;color:#66796e">روش دیگر: اشتراک از گوشی یا دانلود فایل</summary>
+<div class="actions"><button id="shareCsv">📤 اشتراک لیست قیمت</button><button id="shareBackup">📤 اشتراک پشتیبان</button><button id="webCsvDownload">⬇ دریافت CSV</button><button id="webBackupDownload">⬇ دریافت JSON</button><button id="webImagesDownload">⬇ دریافت عکس‌ها</button></div>
+<a href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener noreferrer" style="display:block;margin-top:12px;color:#0f4d3b;font-weight:700">بازکردن Google Drive ↗</a>
+</details>
 </div>
 <div class="card"><h2>📂 مدیریت فایل‌ها</h2>
 <div class="actions"><button id="export">دریافت پشتیبان JSON</button><label class="file">بازیابی پشتیبان <input type="file" id="import" accept=".json,application/json" hidden></label><button id="csv">دریافت CSV</button></div>
@@ -67,4 +64,4 @@
 <h3>۷. قیمت اقساطی نظری</h3><p>نرخی که ارزش اقتصادی دریافتی با تأخیر را حفظ می‌کند نمایش داده می‌شود؛ مجوز ارائه قیمت متفاوت به مشتری نیست.</p>
 <h3>۸. ذخیره و نسخه پشتیبان</h3><p>نام و اطلاعات محصول را وارد و روی ذخیره بزنید. با خروجی JSON نسخه پشتیبان بگیرید.</p>
 <h3>۹. نصب آیفون</h3><p>آدرس سایت را در Safari باز کنید، Share را بزنید و Add to Home Screen را انتخاب کنید.</p></div></section>
-</main><footer>Mouher Pricing · نسخه ۱ · محاسبه‌های آموزشی و مدیریتی</footer><script src="./app.js" defer></script></body></html>
+</main><footer>Mouher Pricing · نسخه ۱ · محاسبه‌های آموزشی و مدیریتی</footer><script src="./app.js" defer></script><script src="./google-config.js" defer></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="./drive.js" defer></script></body></html>
