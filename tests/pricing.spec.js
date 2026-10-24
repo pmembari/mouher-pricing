@@ -224,3 +224,26 @@ test('simple Google Drive onboarding has sign-in button and no developer credent
  await page.locator('#driveCsv').click();
  await expect(page.locator('#driveStatus')).toContainText('مدیر سایت');
 });
+
+test('Google authentication uses temporary browser memory and offers session disconnect',async({page})=>{
+ await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#driveDisconnect')).toBeHidden();
+ await page.evaluate(()=>{
+  window.MOUHER_GOOGLE_CLIENT_ID='12345-example.apps.googleusercontent.com';
+  window.google={accounts:{oauth2:{
+   initTokenClient:({callback})=>({requestAccessToken:()=>callback({access_token:'fake-test-token',expires_in:3600})}),
+   revoke:()=>{}
+  }}};
+  window.fetch=async (url,options)=>{
+   const path=String(url);
+   if(path.includes('/drive/v3/files?')&&(!options||!options.method))return new Response(JSON.stringify({files:[{id:'folder-test'}]}),{status:200,headers:{'Content-Type':'application/json'}});
+   return new Response(JSON.stringify({id:'test-file'}),{status:200,headers:{'Content-Type':'application/json'}});
+  };
+ });
+ page.once('dialog',dialog=>dialog.dismiss());
+ await page.locator('#driveCsv').click();
+ await expect(page.locator('#driveDisconnect')).toBeVisible();
+ expect(await page.evaluate(()=>Object.values(localStorage).join('|').includes('fake-test-token'))).toBe(false);
+ await page.locator('#driveDisconnect').click();
+ await expect(page.locator('#driveDisconnect')).toBeHidden();
+});
