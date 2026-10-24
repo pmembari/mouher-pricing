@@ -250,3 +250,14 @@ test('Google authentication uses temporary browser memory and offers session dis
  await page.locator('#driveDisconnect').click();
  await expect(page.locator('#driveDisconnect')).toBeHidden();
 });
+
+test('inflation reference remains optional and never overwrites manual growth',async({page})=>{
+ await expect(page.locator('#inflationPanel')).toBeVisible();
+ await expect(page.locator('#inflationUseScenario')).toBeVisible();
+ await page.locator('#growth').fill('7');
+ await page.locator('#inflationScenario').fill('5');
+ await expect(page.locator('#growth')).toHaveValue('7');
+ await page.locator('#inflationUseScenario').click();
+ await expect(page.locator('#growth')).toHaveValue('5');
+ await expect(page.locator('#inflationBnplPreview')).not.toHaveText('—');
+});
