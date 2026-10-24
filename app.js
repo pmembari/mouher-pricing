@@ -139,27 +139,43 @@ const money=n=>fmt(n)+' تومان';
 
 // Historical recommendations are proposals, never automatic website writes.
 const approvalKey='mouher-approved-storefront-prices-v1';
+const csvHistoryColumns=['collection','category','sku','name','date','basis','cost','usd','fx','extra','margin','round','actual','installmentEnabled','fee','vat','recover','settlement','growth','sold_cash','sold_bnpl'];
+const quoteCsv=v=>{let x=String(v??'');if(/^[\\s]*[=+@-]/u.test(x))x="'"+x;return '"'+x.replaceAll('"','""')+'"'};
+$('historyTemplate').onclick=()=>{const sample=[['پاییز ۱۴۰۵','پالتو','MH-COAT-01','پالتو قهوه‌ای','2026-08-01','toman',1600000,'','',150000,30,10000,2500000,false,'','','','now','',5,0],['پاییز ۱۴۰۵','پالتو','MH-COAT-01','پالتو قهوه‌ای','2026-10-01','toman',1800000,'','',150000,30,10000,2790000,false,'','','','now','',8,0]];download('mouher-product-history-template.csv','\ufeff'+[csvHistoryColumns,...sample].map(row=>row.map(quoteCsv).join(',')).join('\r\n'),'text/csv;charset=utf-8')};
+function parseHistoryCSV(text){
+ const rows=[];let line=[],field='',quoted=false;const clean=text.replace(/^\ufeff/,'');
+ for(let i=0;i<clean.length;i++){const c=clean[i];if(quoted){if(c==='"'&&clean[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"'){if(field)throw Error('ساختار نقل قول نامعتبر');quoted=true}else if(c===','){line.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&clean[i+1]==='\n')i++;line.push(field);if(line.some(x=>x.trim()))rows.push(line);line=[];field=''}else field+=c}
+ if(quoted)throw Error('نقل قول بسته نشده');line.push(field);if(line.some(x=>x.trim()))rows.push(line);
+ if(rows.length<2)throw Error('فایل باید سرستون و داده داشته باشد');
+ const header=rows.shift().map(x=>x.trim());if(new Set(header).size!==header.length)throw Error('سرستون تکراری است');
+ for(const k of ['collection','category','sku','name','date','basis','cost','extra','margin','round'])if(!header.includes(k))throw Error('ستون '+k+' موجود نیست');
+ if(rows.length>500)throw Error('بیش از ۵۰۰ ردیف قابل وارد کردن نیست');
+ return rows.map((row,i)=>{if(row.length!==header.length)throw Error('تعداد ستون‌ها در ردیف '+(i+2)+' نادرست است');const obj=Object.fromEntries(header.map((h,j)=>[h,row[j].trim()]));const date=new Date(obj.date);if(!/^\d{4}-\d{2}-\d{2}$/.test(obj.date)||Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==obj.date)throw Error('تاریخ نامعتبر در ردیف '+(i+2));if(!obj.sku&&!obj.name)throw Error('نام یا کد کالا در ردیف '+(i+2)+' لازم است');
+ const numeric=['cost','usd','fx','extra','margin','round','actual','fee','vat','growth','sold_cash','sold_bnpl'];for(const k of numeric){if(obj[k]!==undefined&&obj[k]!==''&&(!Number.isFinite(Number(obj[k]))||Number(obj[k])<0))throw Error('عدد نامعتبر '+k+' ردیف '+(i+2))}
+ if(!['toman','usd'].includes(obj.basis)||Number(obj.margin)>=100||Number(obj.round)<=0)throw Error('مبنای هزینه یا حاشیه یا گردکردن نامعتبر در ردیف '+(i+2));
+ const data={collection:obj.collection,category:obj.category,sku:obj.sku,name:obj.name,basis:obj.basis,cost:obj.cost,usd:obj.usd||'',fx:obj.fx||'',extra:obj.extra,margin:obj.margin,round:obj.round,actual:obj.actual||'',installmentEnabled:obj.installmentEnabled==='true'||obj.installmentEnabled==='1',fee:obj.fee||'',vat:obj.vat||'0',recover:obj.recover==='true'||obj.recover==='1',settlement:obj.settlement||'now',growth:obj.growth||''};if(!priceFor(data).valid)throw Error('قیمت‌گذاری ردیف '+(i+2)+' ناقص است');
+ for(const k of ['sold_cash','sold_bnpl'])if(obj[k]&&(!Number.isInteger(Number(obj[k]))||Number(obj[k])>100000))throw Error('تعداد فروش نامعتبر در ردیف '+(i+2));
+ const at=obj.date+'T12:00:00.000Z',id='csv-'+[obj.date,identity(data)].join('|');return {id,at,data,soldCash:Number(obj.sold_cash)||0,soldBnpl:Number(obj.sold_bnpl)||0}});
+}
+$('historyCsv').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{if(file.size>1024*1024)throw Error('فایل باید کمتر از ۱ مگابایت باشد');const incoming=parseHistoryCSV(await file.text());const old=history(),keys=new Set(old.map(e=>e.id));const unique=incoming.filter(e=>!keys.has(e.id));if(!unique.length)throw Error('همه نسخه‌های این فایل قبلاً وارد شده‌اند');if(old.length+unique.length>1000)throw Error('حداکثر ۱۰۰۰ نسخه تاریخچه قابل نگهداری است');
+ const sales=readStore(salesKey,{});for(const e of unique){const month=e.at.slice(0,7);if(e.soldCash)sales[month+'|'+e.id+'|cash']=e.soldCash;if(e.soldBnpl&&e.data.installmentEnabled)sales[month+'|'+e.id+'|bnpl']=e.soldBnpl}
+ localStorage.setItem(historyKey,JSON.stringify([...unique,...old]));localStorage.setItem(salesKey,JSON.stringify(sales));$('historyImportStatus').textContent=fmt(unique.length)+' نسخه وارد شد؛ فقط تعدادهای فروش صریح در درآمد حساب می‌شوند.';renderStore()
+ }catch(error){$('historyImportStatus').textContent='خطا: '+error.message}event.target.value=''});
+const recommendationOverrideKey='mouher-price-recommendation-overrides-v1';
 function recommendPrices(){
- const grouped=new Map();
- for(const entry of storeRows()){const key=identity(entry.data);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(entry)}
- const list=$('recommendationList');list.replaceChildren();
- const approvals=readStore(approvalKey,{});
+ const grouped=new Map();for(const entry of storeRows()){const key=identity(entry.data);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(entry)}
+ const list=$('recommendationList');list.replaceChildren();const approvals=readStore(approvalKey,{}),overrides=readStore(recommendationOverrideKey,{}),sales=readStore(salesKey,{});
  if(!grouped.size){list.textContent='هنوز محصولی ذخیره نشده است.';return}
- for(const [key,entries] of grouped){
-  entries.sort((a,b)=>a.at.localeCompare(b.at));const latest=entries[entries.length-1],p=priceFor(latest.data);
-  if(!p.valid)continue;
-  const older=entries.slice(0,-1).filter(e=>priceFor(e.data).valid),previous=older.at(-1),previousPrice=previous?priceFor(previous.data):null;
-  const oldCost=previousPrice?.total||null,change=oldCost>0?(p.total/oldCost-1)*100:null;
-  const suggested=p.cash; // Today's verified inputs and target margin are the price floor basis.
-  const card=document.createElement('div');card.className='saved';card.style.display='block';
-  const heading=document.createElement('strong');heading.textContent=(latest.data.collection||'بدون مجموعه')+' / '+(latest.data.category||'بدون دسته')+' / '+(latest.data.name||'بدون نام');
-  const desc=document.createElement('p');desc.textContent='هزینه آخرین محاسبه: '+money(p.total)+' | حاشیه هدف: '+fmt(Number(latest.data.margin)||0)+'٪ | پیشنهاد نقدی: '+money(suggested);
-  const detail=document.createElement('p');detail.textContent=previousPrice?'نسخه قبل: هزینه '+money(previousPrice.total)+' و قیمت نقدی '+money(previousPrice.cash)+' | تغییر هزینه: '+(change===null?'نامشخص':change.toLocaleString('fa-IR',{maximumFractionDigits:1})+'٪'):'فقط یک نسخه قیمت داریم؛ پیشنهاد براساس هزینه فعلی است، نه روند تاریخی.';
-  const explain=document.createElement('p');explain.textContent='محاسبه: ('+fmt(p.total)+' ÷ (۱ − '+fmt(Number(latest.data.margin)||0)+'٪)) و گردکردن به بالا = '+money(suggested)+'. فروش ثبت‌شده در این مرحله تقاضای آینده را پیش‌بینی نمی‌کند.';
-  const state=document.createElement('p');const approved=approvals[key];state.textContent=approved?'آخرین تأیید محلی: '+money(approved.price)+' در '+new Date(approved.approvedAt).toLocaleDateString('fa-IR'):'هنوز برای وب‌سایت تأیید نشده';
-  const button=document.createElement('button');button.type='button';button.textContent='تأیید قیمت پیشنهادی برای خروجی سایت';
-  button.onclick=()=>{if(!confirm('قیمت '+money(suggested)+' برای '+(latest.data.name||'این محصول')+' تأیید شود؟ این کار سایت را تغییر نمی‌دهد.'))return;const records=readStore(approvalKey,{});records[key]={collection:latest.data.collection||'',category:latest.data.category||'',sku:latest.data.sku||'',name:latest.data.name||'',price:suggested,approvedAt:new Date().toISOString(),sourceAt:latest.at,currency:'TOMAN'};localStorage.setItem(approvalKey,JSON.stringify(records));recommendPrices()};
-  card.append(heading,desc,detail,explain,state,button);list.append(card)
+ for(const [key,entries] of grouped){entries.sort((a,b)=>a.at.localeCompare(b.at));const latest=entries.at(-1),base=priceFor(latest.data);if(!base.valid)continue;
+ const older=entries.slice(0,-1).filter(e=>priceFor(e.data).valid),previous=older.at(-1),prev=previous?priceFor(previous.data):null,change=prev?.total>0?100*(base.total/prev.total-1):null;
+ const sold=entries.reduce((sum,e)=>{const prefix=e.at.slice(0,7)+'|'+e.id+'|';return sum+Number(sales[prefix+'cash']||0)+Number(sales[prefix+'bnpl']||0)},0);
+ const card=document.createElement('div');card.className='card';const title=document.createElement('h3');title.textContent=[latest.data.collection||'بدون مجموعه',latest.data.category||'بدون دسته',latest.data.name||'بدون نام',latest.data.sku||''].filter(Boolean).join(' / ');card.append(title);
+ const historyText=document.createElement('p');historyText.className='hint';historyText.textContent='تعداد نسخه‌ها: '+fmt(entries.length)+' | فروش ثبت‌شده: '+fmt(sold)+' عدد | هزینه آخرین نسخه: '+money(base.total)+(change===null?' | سابقه قبلی نداریم':' | تغییر نسبت به نسخه قبل: '+change.toLocaleString('fa-IR',{maximumFractionDigits:1})+'٪');card.append(historyText);
+ const initial=overrides[key]||{};const inputs={};for(const [field,label,value] of [['cost','هزینه تولید امروز',latest.data.basis==='usd'?(Number(latest.data.usd)||0)*(Number(latest.data.fx)||0):latest.data.cost],['extra','سایر هزینه‌های هر فروش',latest.data.extra],['margin','حاشیه هدف (٪)',latest.data.margin],['round','گردکردن به بالا',latest.data.round]]){
+ const wrapper=document.createElement('label');wrapper.textContent=label;const inp=document.createElement('input');inp.type='number';inp.min='0';inp.value=initial[field]??value;inp.dataset.field=field;inputs[field]=inp;wrapper.append(inp);card.append(wrapper)}
+ const output=document.createElement('p'),reason=document.createElement('p'),status=document.createElement('p');const calculateDraft=()=>{const cost=Number(inputs.cost.value),extra=Number(inputs.extra.value),margin=Number(inputs.margin.value),round=Number(inputs.round.value);if([cost,extra,margin,round].some(v=>!Number.isFinite(v))||cost<=0||extra<0||margin<0||margin>=100||round<=0){output.textContent='عددهای ورودی نامعتبر هستند';return null}const total=cost+extra,suggested=Math.ceil(total/(1-margin/100)/round)*round;output.textContent='قیمت پیشنهادی جدید: '+money(suggested);reason.textContent='هزینه تولید '+money(cost)+' + هزینه فروش '+money(extra)+' = '+money(total)+'؛ تقسیم بر '+(100-margin).toLocaleString('fa-IR')+'٪ و گردکردن به بالا = '+money(suggested)+'. فروش تاریخی '+fmt(sold)+' عدد است؛ خودکار به معنی تقاضای آینده نیست.';status.textContent=approvals[key]?'آخرین قیمت تأییدشده: '+money(approvals[key].price)+' (تغییر ورودی‌ها تأیید قبلی را به‌روزرسانی نمی‌کند)':'هنوز برای سایت تأیید نشده';return {price:suggested,total,cost,extra,margin,round}};
+ const draft=()=>{const value=calculateDraft();if(value){const current=readStore(recommendationOverrideKey,{});current[key]={cost:value.cost,extra:value.extra,margin:value.margin,round:value.round};localStorage.setItem(recommendationOverrideKey,JSON.stringify(current))}};
+ Object.values(inputs).forEach(input=>input.addEventListener('change',draft));calculateDraft();const button=document.createElement('button');button.textContent='تأیید همین قیمت برای خروجی وب‌سایت';button.onclick=()=>{const d=calculateDraft();if(!d)return;if(!confirm('قیمت '+money(d.price)+' تأیید شود؟ این کار سایت را خودکار تغییر نمی‌دهد.'))return;const current=readStore(approvalKey,{});current[key]={collection:latest.data.collection||'',category:latest.data.category||'',sku:latest.data.sku||'',name:latest.data.name||'',price:d.price,approvedAt:new Date().toISOString(),sourceAt:latest.at,currency:'TOMAN'};localStorage.setItem(approvalKey,JSON.stringify(current));calculateDraft()};card.append(output,reason,status,button);list.append(card)
  }
 }
 $('approvedPriceExport').onclick=()=>{
