@@ -89,6 +89,8 @@ test('illustrated instructions and inflation growth guide load',async({page})=>{
  await expect(guide.locator('img[src*="guide-cost.svg"]')).toBeVisible();
  await expect(guide.locator('#monthly')).not.toHaveText('—');
  await expect(guide.locator('#lesson9')).toBeVisible();
+ await expect(guide.locator('#pricing-flow svg')).toBeVisible();
+ await expect(page.locator('#guideFrame')).toHaveAttribute('scrolling','yes');
 });
 test('separate devices do not share stored products',async({browser})=>{
  const a=await browser.newContext(),b=await browser.newContext();
