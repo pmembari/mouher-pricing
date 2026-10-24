@@ -1,0 +1,1 @@
+// Site administrator: set the public Google OAuth Web Client ID here once. Never put secrets in this file.\nwindow.MOUHER_GOOGLE_CLIENT_ID = '';\n
