@@ -24,6 +24,20 @@
 <p class="hint">این نرخ تورم زنده نیست. رشد قیمت خرید مجدد همان کالا را تخمین بزنید و چند سناریو بررسی کنید.</p>
 <label>گردکردن قیمت به بالا<select id="round"><option value="1000">۱٬۰۰۰ تومان</option><option value="10000" selected>۱۰٬۰۰۰ تومان</option><option value="50000">۵۰٬۰۰۰ تومان</option><option value="100000">۱۰۰٬۰۰۰ تومان</option></select></label>
 <label>قیمت فعلی فروشگاه برای بررسی (اختیاری)<input type="number" min="0" id="actual" placeholder="خالی یعنی قیمت نقدی پیشنهادی"></label></div>
+<div class="card" id="inflationPanel"><h2>📈 تحلیل تورم و سناریوی قیمت پوشاک</h2>
+<p class="hint">داده مرجع از بانک جهانی و با دوره <b>سالانه</b> است؛ تورم ماهانه پوشاک یا هزینه ساخت مانتو نیست. به‌روزرسانی هنگام انتشار سایت انجام می‌شود. سناریوی رشد هزینه را خودتان تعیین کنید.</p>
+<p id="inflationStatus" class="hint" role="status">در حال بررسی آخرین داده منتشرشده…</p>
+<div class="row"><span>آخرین نرخ تورم سالانه عمومی ایران</span><b id="inflationAnnual">—</b></div>
+<div class="row"><span>سال گزارش</span><b id="inflationYear">—</b></div>
+<div class="row"><span>معادل ماهانه با فرض رشد یکنواخت</span><b id="inflationMonthly">—</b></div>
+<p class="hint">«معادل ماهانه» فقط تبدیل ریاضی نرخ سالانه به رشد مرکب است؛ پیش‌بینی ماه بعد یا نرخ ویژه تولید پوشاک نیست.</p>
+<div class="actions"><button type="button" id="inflationApply" disabled>استفاده از معادل ماهانه در سناریو</button><button type="button" id="inflationManual">بازگشت به رشد دستی</button></div>
+<label>رشد ماهانه آزمایشی هزینه تولید لباس (%)<input id="inflationScenario" type="number" min="0" max="300" step=".1" value="7"></label>
+<div class="row"><span>قیمت نقدی مدل فعلی</span><b id="inflationCashPreview">—</b></div>
+<div class="row"><span>قیمت اقساطی نظری با این رشد</span><b id="inflationBnplPreview">—</b></div>
+<p class="hint">این پیش‌نمایش کارمزد، مالیات، حاشیه هدف، هزینه و زمان تسویه فرم بالا را استفاده می‌کند. هیچ‌چیز بدون انتخاب شما در محاسبه اصلی یا محصولات ذخیره‌شده تغییر نمی‌کند.</p>
+<div class="actions"><button type="button" class="primary" id="inflationUseScenario">اعمال رشد انتخابی به محاسبه‌گر</button></div>
+<p class="hint"><a href="https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=IR" target="_blank" rel="noopener noreferrer">منبع: بانک جهانی (داده IMF) ↗</a> — برای رشد واقعی تولید لباس، تغییر هزینه پارچه و دوخت خودتان اولویت دارد.</p></div>
 <div class="card"><h2>۳. نتیجه محاسبه</h2><p id="missing" class="notice"></p><div class="results"><div class="result"><span>قیمت نقدی پیشنهادی</span><strong id="cash">—</strong><small>تومان</small></div><div class="result bnpl"><span>قیمت نظری معادل اقساطی</span><strong id="bnpl">—</strong><small>تومان</small></div></div><p class="notice">قیمت نظری اقساطی به معنی مجاز بودن درج قیمت بیشتر برای مشتری اسنپ‌پی نیست. قرارداد و قوانین را بررسی کنید.</p>
 <div class="row"><span>هزینه کل مستقیم</span><b id="totalCost">—</b></div><div class="row"><span>کارمزد و مالیات غیرقابل‌بازیافت</span><b id="deductions">—</b></div><div class="row"><span>دریافتی اسمی</span><b id="nominal">—</b></div><div class="row"><span>ارزش اقتصادی امروز وجوه</span><b id="pv">—</b></div><div class="row"><span>مشارکت اقتصادی پس از هزینه‌ها</span><b id="profit">—</b></div>
 <h3>برنامه دریافت پول</h3><table><thead><tr><th>زمان</th><th>مبلغ واریز</th><th>ارزش امروز</th></tr></thead><tbody id="scheduleBody"></tbody></table>
