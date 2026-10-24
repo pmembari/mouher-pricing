@@ -136,7 +136,43 @@ function recordPriceHistory(data,at){const h=history();h.unshift({id:at+'-'+Math
 function identity(d){const collection=String(d.collection||'بدون مجموعه').trim()||'بدون مجموعه',category=String(d.category||'بدون دسته').trim()||'بدون دسته';const name=String(d.sku||d.name||'بدون نام').trim().toLocaleLowerCase('fa-IR');return JSON.stringify([collection,category,name])}
 function storeRows(){const h=history(),known=new Set(h.map(e=>identity(e.data)));const legacy=saved().filter(e=>!known.has(identity(e.data))).map((e,i)=>({id:'saved-'+i+'-'+e.at,at:e.at,data:e.data}));return [...h,...legacy].sort((a,b)=>b.at.localeCompare(a.at))}
 const money=n=>fmt(n)+' تومان';
+
+// Historical recommendations are proposals, never automatic website writes.
+const approvalKey='mouher-approved-storefront-prices-v1';
+function recommendPrices(){
+ const grouped=new Map();
+ for(const entry of storeRows()){const key=identity(entry.data);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(entry)}
+ const list=$('recommendationList');list.replaceChildren();
+ const approvals=readStore(approvalKey,{});
+ if(!grouped.size){list.textContent='هنوز محصولی ذخیره نشده است.';return}
+ for(const [key,entries] of grouped){
+  entries.sort((a,b)=>a.at.localeCompare(b.at));const latest=entries[entries.length-1],p=priceFor(latest.data);
+  if(!p.valid)continue;
+  const older=entries.slice(0,-1).filter(e=>priceFor(e.data).valid),previous=older.at(-1),previousPrice=previous?priceFor(previous.data):null;
+  const oldCost=previousPrice?.total||null,change=oldCost>0?(p.total/oldCost-1)*100:null;
+  const suggested=p.cash; // Today's verified inputs and target margin are the price floor basis.
+  const card=document.createElement('div');card.className='saved';card.style.display='block';
+  const heading=document.createElement('strong');heading.textContent=(latest.data.collection||'بدون مجموعه')+' / '+(latest.data.category||'بدون دسته')+' / '+(latest.data.name||'بدون نام');
+  const desc=document.createElement('p');desc.textContent='هزینه آخرین محاسبه: '+money(p.total)+' | حاشیه هدف: '+fmt(Number(latest.data.margin)||0)+'٪ | پیشنهاد نقدی: '+money(suggested);
+  const detail=document.createElement('p');detail.textContent=previousPrice?'نسخه قبل: هزینه '+money(previousPrice.total)+' و قیمت نقدی '+money(previousPrice.cash)+' | تغییر هزینه: '+(change===null?'نامشخص':change.toLocaleString('fa-IR',{maximumFractionDigits:1})+'٪'):'فقط یک نسخه قیمت داریم؛ پیشنهاد براساس هزینه فعلی است، نه روند تاریخی.';
+  const explain=document.createElement('p');explain.textContent='محاسبه: ('+fmt(p.total)+' ÷ (۱ − '+fmt(Number(latest.data.margin)||0)+'٪)) و گردکردن به بالا = '+money(suggested)+'. فروش ثبت‌شده در این مرحله تقاضای آینده را پیش‌بینی نمی‌کند.';
+  const state=document.createElement('p');const approved=approvals[key];state.textContent=approved?'آخرین تأیید محلی: '+money(approved.price)+' در '+new Date(approved.approvedAt).toLocaleDateString('fa-IR'):'هنوز برای وب‌سایت تأیید نشده';
+  const button=document.createElement('button');button.type='button';button.textContent='تأیید قیمت پیشنهادی برای خروجی سایت';
+  button.onclick=()=>{if(!confirm('قیمت '+money(suggested)+' برای '+(latest.data.name||'این محصول')+' تأیید شود؟ این کار سایت را تغییر نمی‌دهد.'))return;const records=readStore(approvalKey,{});records[key]={collection:latest.data.collection||'',category:latest.data.category||'',sku:latest.data.sku||'',name:latest.data.name||'',price:suggested,approvedAt:new Date().toISOString(),sourceAt:latest.at,currency:'TOMAN'};localStorage.setItem(approvalKey,JSON.stringify(records));recommendPrices()};
+  card.append(heading,desc,detail,explain,state,button);list.append(card)
+ }
+}
+$('approvedPriceExport').onclick=()=>{
+ const data=Object.values(readStore(approvalKey,{}));if(!data.length){$('publishStatus').textContent='هنوز قیمتی تأیید نشده است.';return}
+ const rows=[['collection','category','sku','product_name','approved_price_toman','approved_at','source_calculation_at'],...data.map(d=>[d.collection,d.category,d.sku,d.name,d.price,d.approvedAt,d.sourceAt])];
+ const safe=x=>{let v=String(x??'');if(/^[\\s]*[=+@-]/u.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'};
+ const csv='\ufeff'+rows.map(row=>row.map(safe).join(',')).join('\r\n');
+ download('mouher-approved-website-prices.csv',csv,'text/csv;charset=utf-8');
+ $('publishStatus').textContent='فایل قیمت‌های تأییدشده دانلود شد؛ برای انتشار در سایت باید جداگانه وارد سیستم فروشگاه شود.'
+};
+
 function renderStore(){
+ recommendPrices();
  const month=$('storeMonth').value;if(!month)return;
  const sales=readStore(salesKey,{}),fixed=readStore(fixedKey,{}),monthly=Number(fixed[month])||0;
  $('storeFixed').value=monthly;
