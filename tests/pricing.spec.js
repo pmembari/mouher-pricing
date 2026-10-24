@@ -160,3 +160,19 @@ test('product image attaches, previews, persists, and stays isolated from anothe
  const other=await browser.newContext();
  try{const p=await other.newPage();await p.goto('/');await p.locator('[data-tab="products"]').click();await expect(p.locator('#productList img')).toHaveCount(0)}finally{await other.close()}
 });
+
+test('product photo is shared as image file, never uploaded to GitHub',async({page})=>{
+ await fillValid(page);
+ const image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+QkioAAAAASUVORK5CYII=','base64');
+ await page.locator('#photo').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:image});
+ await expect(page.locator('#photoPreview')).toBeVisible();
+ await page.evaluate(()=>{
+  window.__shared=[];
+  Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});
+  Object.defineProperty(navigator,'share',{configurable:true,value:async data=>window.__shared.push({name:data.files[0].name,type:data.files[0].type})});
+ });
+ await page.locator('#sharePhoto').click();
+ await expect.poll(()=>page.evaluate(()=>window.__shared.length)).toBe(1);
+ expect(await page.evaluate(()=>window.__shared[0].type)).toBe('image/jpeg');
+ expect(await page.locator('#publicPhoto').count()).toBe(0);
+});
