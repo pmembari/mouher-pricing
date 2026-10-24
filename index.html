@@ -5,6 +5,13 @@
 <div class="card"><h2>۱. مشخصات و هزینه محصول</h2>
 <label>نام محصول<input id="name" placeholder="مثلاً پیراهن قهوه‌ای"></label>
 <label>کد کالا (اختیاری)<input id="sku" placeholder="SKU"></label>
+<div style="background:#f7faf5;padding:14px;border:1px dashed #a7c1a8;border-radius:16px;margin:14px 0">
+<label for="photo" style="margin:0 0 8px">📷 عکس محصول (اختیاری)</label>
+<input id="photo" type="file" accept="image/*" style="width:100%;font-size:14px">
+<img id="photoPreview" alt="پیش‌نمایش عکس محصول" hidden style="display:block;width:116px;height:116px;object-fit:cover;border-radius:13px;margin:12px 0">
+<button id="removePhoto" type="button" hidden>حذف عکس</button>
+<p class="hint">عکس کوچک‌سازی می‌شود و فقط روی همین دستگاه می‌ماند. در CSV درج نمی‌شود؛ نسخه پشتیبان JSON آن را شامل می‌شود.</p>
+</div>
 <label>مبنای هزینه<select id="basis"><option value="toman">تومان</option><option value="usd">دلار یا تتر (صرفاً واحد مرجع)</option></select></label>
 <div id="tomanCost"><label>هزینه خرید مجدد هر محصول امروز (تومان)<input type="number" min="0" id="cost" value="1800000"></label></div>
 <div id="usdCost" hidden><label>هزینه هر محصول (دلار)<input type="number" min="0" id="usd" value="12"></label><label>نرخ دلار یا تتر به تومان (دستی)<input type="number" min="0" id="fx" value="150000"></label></div>
