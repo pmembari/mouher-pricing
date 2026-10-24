@@ -292,3 +292,24 @@ test('cash-only seller calculates and saves without SnappPay details',async({pag
  await expect(page.locator('#productList')).toContainText('پالتو نقدی موهر');
  await expect(page.locator('#productList')).not.toContainText('اقساط نظری');
 });
+
+test('store groups unique item under category and collection without multiplying sales',async({page})=>{
+ await page.locator('#installmentEnabled').uncheck();
+ await page.locator('#collection').fill('پاییز ۱۴۰۵');
+ await page.locator('#category').fill('پالتو');
+ await page.locator('#name').fill('پالتو قهوه‌ای');
+ await page.locator('#sku').fill('MH-01');
+ await save(page);
+ await page.locator('[data-tab="store"]').click();
+ await expect(page.locator('#storeRevenue')).toContainText('۰');
+ const item=page.locator('#storeHistory details').first();
+ await item.locator('summary').click();
+ await item.locator('input[type="number"]').first().fill('10');
+ await item.locator('input[type="number"]').first().dispatchEvent('change');
+ await expect(page.locator('#storeRevenue')).toContainText('۲۷٬۹۰۰٬۰۰۰');
+ await page.locator('#storeGroup').selectOption('category');
+ await expect(page.locator('#storeGroups')).toContainText('پاییز ۱۴۰۵ / پالتو');
+ await page.locator('#storeGroup').selectOption('item');
+ await expect(page.locator('#storeGroups')).toContainText('MH-01');
+ await expect(page.locator('#storeRevenue')).toContainText('۲۷٬۹۰۰٬۰۰۰');
+});
