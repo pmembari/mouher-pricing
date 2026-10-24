@@ -147,3 +147,16 @@ test('share fallback downloads file if native sharing unavailable',async({page})
  const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#shareCsv').click()]);
  expect(download.suggestedFilename()).toBe('mouher-price-list.csv');
 });
+
+test('product image attaches, previews, persists, and stays isolated from another device',async({page,browser})=>{
+ await fillValid(page);
+ const image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+QkioAAAAASUVORK5CYII=','base64');
+ await page.locator('#photo').setInputFiles({name:'test-product.png',mimeType:'image/png',buffer:image});
+ await expect(page.locator('#photoPreview')).toBeVisible();
+ await save(page);await page.reload();await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#productList img')).toHaveCount(1);
+ await page.locator('#productList button').first().click();
+ await expect(page.locator('#photoPreview')).toBeVisible();
+ const other=await browser.newContext();
+ try{const p=await other.newPage();await p.goto('/');await p.locator('[data-tab="products"]').click();await expect(p.locator('#productList img')).toHaveCount(0)}finally{await other.close()}
+});
