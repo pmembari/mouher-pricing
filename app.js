@@ -128,3 +128,38 @@ render();calculate();if('serviceWorker'in navigator)window.addEventListener('loa
 // Keep the guide in its own scrollable frame; native scrolling works on iPhone.
 if(location.hash==='#guide')show('guide');
 window.addEventListener('hashchange',()=>{if(location.hash==='#guide')show('guide');else if(location.hash==='#calculator')show('calculator')});
+
+(function initInflationAnalysis(){
+const get=id=>document.getElementById(id);
+const money=n=>Number.isFinite(n)?Math.round(n).toLocaleString('fa-IR')+' تومان':'—';
+let annual=null,manual=get('growth').value;
+const preview=()=>{
+ const n=id=>Math.max(0,Number(get(id).value)||0);
+ const replacement=get('basis').value==='usd'?n('usd')*n('fx'):n('cost');
+ const cost=replacement+n('extra'),margin=Math.min(.9,n('margin')/100),retained=1-n('fee')/100*(1+(get('recover').checked?0:n('vat')/100));
+ const schedule=periods[get('settlement').value]||periods.now,growth=n('inflationScenario')/100;
+ const discount=schedule.reduce((sum,[month,share])=>sum+share/Math.pow(1+growth,month),0);
+ const step=n('round')||10000,up=value=>Math.ceil(value/step)*step;
+ get('inflationCashPreview').textContent=money(up(cost/(1-margin)));
+ get('inflationBnplPreview').textContent=money(retained>0&&discount>0?up(cost/(1-margin)/retained/discount):NaN);
+};
+get('inflationApply').onclick=()=>{if(annual!==null){get('inflationScenario').value=(100*(Math.pow(1+annual/100,1/12)-1)).toFixed(2);preview()}};
+get('inflationManual').onclick=()=>{get('inflationScenario').value=manual;preview()};
+get('inflationUseScenario').onclick=()=>{get('growth').value=get('inflationScenario').value;get('growth').dispatchEvent(new Event('input',{bubbles:true}));get('inflationStatus').textContent='سناریوی انتخابی اعمال شد؛ برای ذخیره دائمی محصول، «ذخیره محصول» را بزنید.'};
+get('inflationScenario').addEventListener('input',preview);
+ids.forEach(id=>get(id).addEventListener('input',preview));
+get('settlement').addEventListener('change',preview);
+get('basis').addEventListener('change',preview);
+get('recover').addEventListener('change',preview);
+preview();
+fetch('./inflation-data.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('no dataset');return r.json()}).then(data=>{
+ if(data.status!=='ok'||!Array.isArray(data.observations)||!data.latest||!Number.isFinite(data.latest.annual_pct)||!Number.isInteger(data.latest.year))throw Error('invalid dataset');
+ annual=data.latest.annual_pct;
+ get('inflationAnnual').textContent=annual.toLocaleString('fa-IR')+'٪';
+ get('inflationYear').textContent=String(data.latest.year);
+ get('inflationMonthly').textContent=(100*(Math.pow(1+annual/100,1/12)-1)).toFixed(2)+'٪';
+ get('inflationApply').disabled=annual<=-100;
+ const age=new Date().getUTCFullYear()-data.latest.year;
+ get('inflationStatus').textContent=(age>1?'⚠️ داده قدیمی است. ':'')+'مرجع سالانه عمومی؛ آخرین سال موجود: '+data.latest.year+'؛ بررسی: '+String(data.checked_at||'').slice(0,10);
+ }).catch(()=>{get('inflationStatus').textContent='داده معتبر خودکار در دسترس نیست. نرخ رشد تولید را دستی تعیین کنید؛ هیچ نرخ فرضی جایگزین نمی‌شود.'});
+})();
