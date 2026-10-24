@@ -204,3 +204,38 @@ test('browser-only backup downloads JSON without Google login',async({page})=>{
  const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#webBackupDownload').click()]);
  expect(file.suggestedFilename()).toBe('mouher-pricing-backup.json');
 });
+
+test('security: malicious product names render as text, not executable HTML',async({page})=>{
+ const payload='<img src=x onerror="window.__pwned=true">';
+ await page.evaluate(p=>{
+  localStorage.setItem('mouher-pricing-products-v1',JSON.stringify([{data:{name:p,sku:'S1',basis:'toman',cost:'1000',margin:'30',fee:'10',growth:'0',settlement:'now'},at:new Date().toISOString()}]));
+ },payload);
+ await page.reload();await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#productList')).toContainText(payload);
+ expect(await page.evaluate(()=>window.__pwned===true)).toBe(false);
+});
+test('security: spreadsheet formulas are neutralized in exported CSV',async({page})=>{
+ await page.locator('#name').fill('=HYPERLINK("https://evil.example","CLICK")');
+ await page.locator('#sku').fill('+SUM(1,2)');
+ await page.locator('#fee').fill('5');await page.locator('#growth').fill('0');
+ await save(page);await page.locator('[data-tab="products"]').click();
+ const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#csv').click()]);
+ const csv=require('node:fs').readFileSync(await file.path(),'utf8');
+ expect(csv).toContain('"\'=HYPERLINK(');
+ expect(csv).toContain('"\'+SUM(1,2)"');
+});
+test('security: malformed and oversized JSON imports preserve existing products',async({page})=>{
+ await fillValid(page);await save(page);await page.locator('[data-tab="products"]').click();
+ const invalid={version:1,products:[{data:{name:'bad',photo:'data:text/html;base64,PHNjcmlwdD4='},at:new Date().toISOString()}]};
+ page.once('dialog',d=>d.accept());
+ await page.locator('#import').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(invalid))});
+ await expect(page.locator('#productList .saved')).toHaveCount(1);
+ await expect(page.locator('#productList')).toContainText('پیراهن موهر');
+});
+test('security: Drive upload cannot run with no OAuth client configured',async({page})=>{
+ await page.locator('[data-tab="products"]').click();
+ await page.evaluate(()=>{window.__driveRequests=[]; const realFetch=window.fetch;window.fetch=(...args)=>{window.__driveRequests.push(String(args[0]));return realFetch(...args)}});
+ await page.locator('#driveImages').click();
+ await expect(page.locator('#driveStatus')).toContainText('OAuth Client ID');
+ expect(await page.evaluate(()=>window.__driveRequests.filter(u=>u.includes('googleapis.com/drive')))).toEqual([]);
+});
