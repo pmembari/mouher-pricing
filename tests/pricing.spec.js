@@ -101,3 +101,49 @@ test('separate devices do not share stored products',async({browser})=>{
   await expect(pa.locator('#productList')).toContainText('فقط دستگاه الف');
  }finally{await a.close();await b.close()}
 });
+
+test('Google Drive CSV share passes calculated file to native share sheet without uploading',async({page})=>{
+ await fillValid(page);await save(page);
+ await page.locator('[data-tab="products"]').click();
+ await page.evaluate(()=>{
+  window.__shared=[];
+  Object.defineProperty(navigator,'canShare',{configurable:true,value:({files})=>files.length===1});
+  Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{
+   const file=data.files[0];
+   window.__shared.push({name:file.name,type:file.type,content:await file.text()});
+  }});
+ });
+ await page.locator('#shareCsv').click();
+ await expect.poll(()=>page.evaluate(()=>window.__shared.length)).toBe(1);
+ const shared=await page.evaluate(()=>window.__shared[0]);
+ expect(shared.name).toBe('mouher-price-list.csv');
+ expect(shared.content).toContain('MH-SHIRT-001');
+ expect(shared.content).toContain('2790000');
+});
+test('Google Drive JSON share contains product backup, not other devices data',async({page})=>{
+ await fillValid(page);await save(page);
+ await page.locator('[data-tab="products"]').click();
+ await page.evaluate(()=>{
+  window.__shared=[];
+  Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});
+  Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{
+   window.__shared.push(JSON.parse(await data.files[0].text()));
+  }});
+ });
+ await page.locator('#shareBackup').click();
+ await expect.poll(()=>page.evaluate(()=>window.__shared.length)).toBe(1);
+ const shared=await page.evaluate(()=>window.__shared[0]);
+ expect(shared.products).toHaveLength(1);
+ expect(shared.products[0].data.sku).toBe('MH-SHIRT-001');
+});
+test('share fallback downloads file if native sharing unavailable',async({page})=>{
+ await fillValid(page);await save(page);
+ await page.locator('[data-tab="products"]').click();
+ await page.evaluate(()=>{
+  Object.defineProperty(navigator,'canShare',{configurable:true,value:undefined});
+  Object.defineProperty(navigator,'share',{configurable:true,value:undefined});
+ });
+ page.once('dialog',d=>d.accept());
+ const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#shareCsv').click()]);
+ expect(download.suggestedFilename()).toBe('mouher-price-list.csv');
+});
