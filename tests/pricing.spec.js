@@ -15,7 +15,7 @@ async function save(page){
  page.once('dialog',d=>d.accept());
  await page.locator('#save').click();
 }
-test.beforeEach(async({page})=>{const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.waitForLoadState('load');const state=await page.evaluate(()=>({app:typeof calculate,content:document.getElementById('missing')?.textContent,ready:document.readyState}));if(state.app!=='function'||errors.length)throw new Error('App initialization diagnostic: '+JSON.stringify({state,errors}));});
+test.beforeEach(async({page})=>{const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.waitForLoadState('load');const state=await page.evaluate(()=>({app:typeof calculate,content:document.getElementById('missing')?.textContent,ready:document.readyState}));if(state.app!=='function'||errors.length)throw new Error('App initialization diagnostic: '+JSON.stringify({state,errors}));await page.locator('#installmentEnabled').check();});
 test('navigation: calculator, products and guide tabs are interactive',async({page})=>{
  await page.locator('[data-tab="products"]').click();
  await expect(page.locator('#products')).toHaveClass(/active/);
