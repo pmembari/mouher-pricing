@@ -105,6 +105,20 @@ function exportCsv(share=false){
  const csv='\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n');if(share==='return')return csv;if(share)return shareFile('mouher-price-list.csv',csv,'text/csv;charset=utf-8');download('mouher-price-list.csv',csv,'text/csv;charset=utf-8');
 }
 $('csv').onclick=()=>exportCsv(false);
+$('webCsvDownload').onclick=()=>exportCsv(false);
+$('webBackupDownload').onclick=()=>$('export').click();
+$('webImagesDownload').onclick=()=>{
+ const photos=saved().filter(x=>typeof x.data?.photo==='string'&&x.data.photo.startsWith('data:image/jpeg;base64,'));
+ if(!photos.length)return alert('عکس ذخیره‌شده‌ای وجود ندارد.');
+ if(!confirm('تعداد '+photos.length+' تصویر دانلود شود؟ ممکن است Safari اجازه دانلود چند فایل را درخواست کند.'))return;
+ for(let i=0;i<photos.length;i++){
+  const d=photos[i].data;
+  const bytes=Uint8Array.from(atob(d.photo.split(',')[1]),c=>c.charCodeAt(0));
+  const name=String(d.sku||'product-'+(i+1)).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,70);
+  download(name+'.jpg',bytes,'image/jpeg');
+ }
+};
+
 $('shareCsv').onclick=()=>exportCsv(true);
 $('searchProducts').addEventListener('input',render);
 
