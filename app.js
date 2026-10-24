@@ -101,7 +101,7 @@ function exportCsv(share=false){
  const columns=['نام محصول','کد کالا','مبنای هزینه','هزینه جایگزینی تومان','هزینه مستقیم کل تومان','حاشیه هدف درصد','کارمزد درصد','مالیات کارمزد درصد','مالیات قابل بازیافت','برنامه تسویه','رشد ماهانه درصد','قیمت نقدی پیشنهادی تومان','قیمت نظری اقساطی تومان','قیمت فروش بررسی شده تومان','ارزش اقتصادی وجوه تومان','مشارکت اقتصادی تومان','وضعیت','آخرین ذخیره'];
  const records=saved().map(({data:d,at})=>{const p=priceFor(d);return [d.name||'',d.sku||'',d.basis||'toman',d.basis==='usd'?(Number(d.usd)||0)*(Number(d.fx)||0):d.cost||0,p.total,d.margin||'',d.fee||'',d.vat||'',d.recover?'بله':'خیر',d.settlement||'',d.growth||'',p.valid?p.cash:'',p.valid?p.bnpl:'',p.valid?p.actual:'',p.valid?Math.round(p.pv):'',p.valid?Math.round(p.contribution):'',p.valid?'آماده بررسی':'ناقص',at];
  });
- const escapeCell=x=>'"'+String(x??'').replaceAll('"','""')+'"';
+ const escapeCell=x=>{let v=String(x??'');if(/^[\\s\\u0000-\\u001f]*[=+@-]/u.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'};
  const csv='\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n');if(share==='return')return csv;if(share)return shareFile('mouher-price-list.csv',csv,'text/csv;charset=utf-8');download('mouher-price-list.csv',csv,'text/csv;charset=utf-8');
 }
 $('csv').onclick=()=>exportCsv(false);
@@ -122,5 +122,5 @@ $('webImagesDownload').onclick=()=>{
 $('shareCsv').onclick=()=>exportCsv(true);
 $('searchProducts').addEventListener('input',render);
 
-$('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.version!==1||!Array.isArray(data.products)||data.products.length>10000||!data.products.every(x=>x&&x.data&&typeof x.data==='object'))throw Error();if(confirm('محصولات فعلی با نسخه پشتیبان جایگزین شوند؟'))persist(data.products)}catch{alert('نسخه پشتیبان نامعتبر است')}e.target.value=''};
+$('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(file.size>8*1024*1024||data.version!==1||!Array.isArray(data.products)||data.products.length>500||!data.products.every(x=>x&&x.data&&typeof x.data==='object'&&!Array.isArray(x.data)&&typeof x.data.name==='string'&&x.data.name.length<=200&&(!x.data.sku||typeof x.data.sku==='string'&&x.data.sku.length<=100)&&(!x.data.photo||typeof x.data.photo==='string'&&x.data.photo.length<=160000&&x.data.photo.startsWith('data:image/jpeg;base64,'))&&typeof x.at==='string'&&x.at.length<=100))throw Error();if(confirm('محصولات فعلی با نسخه پشتیبان جایگزین شوند؟'))persist(data.products)}catch{alert('نسخه پشتیبان نامعتبر است')}e.target.value=''};
 render();calculate();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
