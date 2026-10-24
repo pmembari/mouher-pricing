@@ -101,7 +101,7 @@ function exportCsv(share=false){
  const columns=['نام محصول','کد کالا','مبنای هزینه','هزینه جایگزینی تومان','هزینه مستقیم کل تومان','حاشیه هدف درصد','کارمزد درصد','مالیات کارمزد درصد','مالیات قابل بازیافت','برنامه تسویه','رشد ماهانه درصد','قیمت نقدی پیشنهادی تومان','قیمت نظری اقساطی تومان','قیمت فروش بررسی شده تومان','ارزش اقتصادی وجوه تومان','مشارکت اقتصادی تومان','وضعیت','آخرین ذخیره'];
  const records=saved().map(({data:d,at})=>{const p=priceFor(d);return [d.name||'',d.sku||'',d.basis||'toman',d.basis==='usd'?(Number(d.usd)||0)*(Number(d.fx)||0):d.cost||0,p.total,d.margin||'',d.fee||'',d.vat||'',d.recover?'بله':'خیر',d.settlement||'',d.growth||'',p.valid?p.cash:'',p.valid?p.bnpl:'',p.valid?p.actual:'',p.valid?Math.round(p.pv):'',p.valid?Math.round(p.contribution):'',p.valid?'آماده بررسی':'ناقص',at];
  });
- const escapeCell=x=>{let v=String(x??'');if(/^[\\s\\u0000-\\u001f]*[=+@-]/u.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'};
+ const escapeCell=x=>{let v=String(x??'');if(/^[\s\u0000-\u001f]*[=+@-]/u.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'};
  const csv='\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n');if(share==='return')return csv;if(share)return shareFile('mouher-price-list.csv',csv,'text/csv;charset=utf-8');download('mouher-price-list.csv',csv,'text/csv;charset=utf-8');
 }
 $('csv').onclick=()=>exportCsv(false);
