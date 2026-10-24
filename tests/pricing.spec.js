@@ -276,3 +276,19 @@ test('installment guide agrees with coat sale at actual cash price',async({page}
  await page.locator('[data-tab="guide"]').click();
  await expect(page.frameLocator('#guideFrame').locator('#installment-guide')).toContainText('۱۳۸٬۴۱۸');
 });
+
+test('cash-only seller calculates and saves without SnappPay details',async({page})=>{
+ await page.locator('#installmentEnabled').uncheck();
+ await page.locator('#fee').fill('');
+ await page.locator('#growth').fill('');
+ await page.locator('#name').fill('پالتو نقدی موهر');
+ await expect(page.locator('#installmentFields')).toBeHidden();
+ await expect(page.locator('#bnplResult')).toBeHidden();
+ await expect(page.locator('#cash')).toContainText('۲٬۷۹۰٬۰۰۰');
+ await expect(page.locator('#missing')).toBeHidden();
+ await expect(page.locator('#profit')).toContainText('۸۴۰٬۰۰۰');
+ await save(page);
+ await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#productList')).toContainText('پالتو نقدی موهر');
+ await expect(page.locator('#productList')).not.toContainText('اقساط نظری');
+});
