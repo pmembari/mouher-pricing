@@ -192,3 +192,15 @@ test('dated Drive export requires OAuth configuration and does not leak product 
  await page.locator('#driveCsv').click();
  await expect(page.locator('#driveStatus')).toContainText('OAuth Client ID');
 });
+
+test('browser-only Google Drive path downloads CSV without OAuth or installed app',async({page})=>{
+ await fillValid(page);await save(page);await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('a[href="https://drive.google.com/drive/u/0/my-drive"]')).toHaveCount(2);
+ const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#webCsvDownload').click()]);
+ expect(file.suggestedFilename()).toBe('mouher-price-list.csv');
+});
+test('browser-only backup downloads JSON without Google login',async({page})=>{
+ await page.locator('[data-tab="products"]').click();
+ const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#webBackupDownload').click()]);
+ expect(file.suggestedFilename()).toBe('mouher-pricing-backup.json');
+});
