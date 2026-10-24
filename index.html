@@ -9,9 +9,7 @@
 <label for="photo" style="margin:0 0 8px">📷 عکس محصول (اختیاری)</label>
 <input id="photo" type="file" accept="image/*" style="width:100%;font-size:14px">
 <img id="photoPreview" alt="پیش‌نمایش عکس محصول" hidden style="display:block;width:116px;height:116px;object-fit:cover;border-radius:13px;margin:12px 0">
-<button id="removePhoto" type="button" hidden>حذف عکس</button><label>آدرس عکس منتشرشده در GitHub Pages (اختیاری)<input id="publicPhoto" type="url" placeholder="https://pmembari.github.io/mouher-pricing/images/products/example.jpg"></label><p class="hint">برای انتشار عمومی تصویر، آن را با حساب GitHub خود در پوشه images/products مخزن بارگذاری کنید. سپس لینک نهایی را اینجا وارد کنید. انتشار عکس نیازمند تأیید GitHub است؛ این اپ به حساب GitHub شما دسترسی ندارد.</p><a href="https://github.com/pmembari/mouher-pricing/upload/main/images/products" target="_blank" rel="noopener noreferrer">↗ بارگذاری عکس در مخزن GitHub</a>
-<p class="hint">عکس انتخاب‌شده تا زمان بارگذاری دستی در GitHub فقط روی همین دستگاه می‌ماند. عکس منتشرشده در GitHub برای همه قابل مشاهده است. در CSV درج نمی‌شود؛ نسخه پشتیبان JSON آن را شامل می‌شود.</p>
-</div>
+<div class="actions"><button id="removePhoto" type="button" hidden>حذف عکس</button><button id="sharePhoto" type="button">📤 ارسال عکس به Google Drive</button></div><p class="hint">عکس را روی همین گوشی انتخاب کنید و دکمه اشتراک را بزنید. در پنجره iOS برنامه Google Drive را انتخاب و آپلود را تأیید کنید. عکس و قیمت به GitHub ارسال نمی‌شوند.</p></div>
 <label>مبنای هزینه<select id="basis"><option value="toman">تومان</option><option value="usd">دلار یا تتر (صرفاً واحد مرجع)</option></select></label>
 <div id="tomanCost"><label>هزینه خرید مجدد هر محصول امروز (تومان)<input type="number" min="0" id="cost" value="1800000"></label></div>
 <div id="usdCost" hidden><label>هزینه هر محصول (دلار)<input type="number" min="0" id="usd" value="12"></label><label>نرخ دلار یا تتر به تومان (دستی)<input type="number" min="0" id="fx" value="150000"></label></div>
