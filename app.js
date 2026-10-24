@@ -52,7 +52,7 @@ function priceFor(d){
 const snapshot=()=>({...Object.fromEntries(ids.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),photo:currentPhoto});
 function load(s){currentPhoto=typeof s.photo==='string'&&s.photo.startsWith('data:image/jpeg;base64,')?s.photo:'';previewPhoto();ids.forEach(id=>{if(s[id]!==undefined){if($(id).type==='checkbox')$(id).checked=!!s[id];else $(id).value=String(s[id])}});calculate()}
 function saved(){try{const list=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(list)?list:[]}catch{return []}}
-function persist(items){localStorage.setItem(key,JSON.stringify(items));render()}
+function persist(items){localStorage.setItem(key,JSON.stringify(items));render();renderStore()}
 function show(tab){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.tab===tab))}
 function render(){
  const container=$('productList');container.replaceChildren();
@@ -75,7 +75,7 @@ function render(){
 
 ids.forEach(id=>{['input','change'].forEach(event=>$(id).addEventListener(event,calculate))});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));
-$('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصول را وارد کنید.');const items=saved(),data=snapshot(),at=new Date().toISOString();const same=items.findIndex(x=>data.sku&&x.data.sku===data.sku);if(same>=0){if(!confirm('محصول دارای همین کد جایگزین شود؟'))return;items[same]={data,at}}else items.unshift({data,at});try{persist(items);alert('محصول در همین دستگاه ذخیره شد.')}catch{alert('ذخیره در این مرورگر ممکن نیست.')}};
+$('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصول را وارد کنید.');const items=saved(),data=snapshot(),at=new Date().toISOString();const same=items.findIndex(x=>data.sku&&x.data.sku===data.sku);if(same>=0){if(!confirm('محصول دارای همین کد جایگزین شود؟'))return;items[same]={data,at}}else items.unshift({data,at});try{persist(items);recordPriceHistory(data,at);alert('محصول و نسخه قیمت در همین دستگاه ذخیره شد.')}catch{alert('ذخیره در این مرورگر ممکن نیست.')}};
 $('copy').onclick=async()=>{const t='موهر - '+($('name').value||'محصول')+'\nقیمت نقدی: '+fmt(result.cash)+' تومان\nقیمت نظری اقساطی: '+fmt(result.bnpl)+' تومان\nمشارکت اقتصادی: '+fmt(result.profit)+' تومان';try{await navigator.clipboard.writeText(t);alert('نتایج کپی شد')}catch{prompt('متن را کپی کنید',t)}};
 function download(filename,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('export').onclick=()=>download('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
@@ -128,7 +128,51 @@ $('shareCsv').onclick=()=>exportCsv(true);
 $('searchProducts').addEventListener('input',render);
 
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(file.size>8*1024*1024||data.version!==1||!Array.isArray(data.products)||data.products.length>500||!data.products.every(x=>x&&x.data&&typeof x.data==='object'&&!Array.isArray(x.data)&&typeof x.data.name==='string'&&x.data.name.length<=200&&(!x.data.sku||typeof x.data.sku==='string'&&x.data.sku.length<=100)&&(!x.data.photo||typeof x.data.photo==='string'&&x.data.photo.length<=160000&&x.data.photo.startsWith('data:image/jpeg;base64,'))&&typeof x.at==='string'&&x.at.length<=100))throw Error();if(confirm('محصولات فعلی با نسخه پشتیبان جایگزین شوند؟'))persist(data.products)}catch{alert('نسخه پشتیبان نامعتبر است')}e.target.value=''};
-render();calculate();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+const historyKey='mouher-pricing-history-v1',salesKey='mouher-store-sales-v1',fixedKey='mouher-store-fixed-v1';
+function readStore(k,fallback){try{const x=JSON.parse(localStorage.getItem(k)||'null');return x??fallback}catch{return fallback}}
+function history(){const h=readStore(historyKey,[]);return Array.isArray(h)?h.filter(e=>e&&e.data&&typeof e.at==='string').slice(0,1000):[]}
+function recordPriceHistory(data,at){const h=history();h.unshift({id:at+'-'+Math.random().toString(36).slice(2,9),at,data:{...data,photo:''}});try{localStorage.setItem(historyKey,JSON.stringify(h.slice(0,1000)));renderStore()}catch{alert('محصول ذخیره شد، ولی فضای تاریخچه پر است. از داده‌ها نسخه پشتیبان بگیر.')}} 
+function storeRows(){const h=history();const known=new Set(h.map(e=>e.data.sku||e.data.name));const legacy=saved().filter(e=>!known.has(e.data.sku||e.data.name)).map((e,i)=>({id:'saved-'+i+'-'+e.at,at:e.at,data:e.data}));return [...h,...legacy].sort((a,b)=>b.at.localeCompare(a.at))}
+const money=n=>fmt(n)+' تومان';
+function renderStore(){
+ const month=$('storeMonth').value;if(!month)return;
+ const sales=readStore(salesKey,{}),fixed=readStore(fixedKey,{}),monthly=Number(fixed[month])||0;
+ $('storeFixed').value=monthly;
+ const container=$('storeHistory');container.replaceChildren();
+ let revenue=0,variable=0,fees=0,shown=0;
+ for(const entry of storeRows()){
+  const p=priceFor(entry.data);if(!p.valid)continue;
+  const row=document.createElement('div');row.className='saved';row.style.display='block';
+  const title=document.createElement('b');title.textContent=(entry.data.name||'بدون نام')+' · '+new Date(entry.at).toLocaleDateString('fa-IR');
+  const detail=document.createElement('p');detail.textContent='هزینه واحد: '+money(p.total)+' | نقدی: '+money(p.cash)+(p.installment?' | اقساط نظری: '+money(p.bnpl):'');
+  row.append(title,detail);
+  const modeIds=p.installment?['cash','bnpl']:['cash'];
+  for(const mode of modeIds){
+   const key=month+'|'+entry.id+'|'+mode,qty=Math.max(0,Math.floor(Number(sales[key])||0));
+   const field=document.createElement('label');field.textContent=(mode==='cash'?'تعداد فروش نقدی':'تعداد فروش با اسنپ‌پی')+' در این ماه';
+   const input=document.createElement('input');input.type='number';input.min='0';input.step='1';input.value=qty;input.style.maxWidth='180px';
+   input.addEventListener('change',()=>{const value=Number(input.value);if(!Number.isFinite(value)||value<0||!Number.isInteger(value)||value>100000){alert('تعداد باید عدد صحیح بین ۰ و ۱۰۰٬۰۰۰ باشد.');renderStore();return}const fresh=readStore(salesKey,{});if(value)fresh[key]=value;else delete fresh[key];localStorage.setItem(salesKey,JSON.stringify(fresh));renderStore()});
+   field.append(input);row.append(field);
+   const price=entry.data.actual&&Number(entry.data.actual)>0?Number(entry.data.actual):p.cash;
+   const fee=mode==='bnpl'?price*(1-(1-(Number(entry.data.fee)||0)/100*(1+(entry.data.recover?0:(Number(entry.data.vat)||0)/100)))):0;
+   revenue+=qty*price;variable+=qty*p.total;fees+=qty*fee;
+  }
+  container.append(row);shown++;
+ }
+ if(!shown){container.textContent='هنوز محاسبه قیمت ذخیره‌شده‌ای نداری. اول در «محاسبه» یک محصول ذخیره کن.'}
+ const gross=revenue-variable-fees,net=gross-monthly;
+ for(const [id,val] of Object.entries({storeRevenue:revenue,storeVariable:variable,storeFee:fees,storeGross:gross,storeFixedOut:monthly,storeNet:net}))$(id).textContent=money(val);
+ $('storeNet').style.color=net<0?'#b34242':'#176344';
+}
+$('storeMonth').value=new Date().toISOString().slice(0,7);
+$('storeMonth').addEventListener('change',renderStore);
+$('storeFixed').addEventListener('change',()=>{const x=Number($('storeFixed').value);if(!Number.isFinite(x)||x<0){alert('هزینه نمی‌تواند منفی باشد');renderStore();return}const a=readStore(fixedKey,{});a[$('storeMonth').value]=x;localStorage.setItem(fixedKey,JSON.stringify(a));renderStore()});
+$('storeExport').onclick=()=>{const m=$('storeMonth').value;const s=readStore(salesKey,{});const rows=[['نام محصول','تاریخ محاسبه','روش فروش','تعداد','قیمت واحد تومان','هزینه مستقیم واحد تومان','کارمزد واحد تومان','جمع فروش','جمع هزینه مستقیم','جمع کارمزد']];
+for(const e of storeRows()){const p=priceFor(e.data);if(!p.valid)continue;for(const mode of p.installment?['cash','bnpl']:['cash']){const q=Number(s[m+'|'+e.id+'|'+mode])||0;if(!q)continue;const price=Number(e.data.actual)>0?Number(e.data.actual):p.cash,fee=mode==='bnpl'?price*(Number(e.data.fee)||0)/100*(1+(e.data.recover?0:(Number(e.data.vat)||0)/100)):0;rows.push([e.data.name||'',e.at,mode==='cash'?'نقدی':'اسنپ‌پی',q,price,p.total,fee,q*price,q*p.total,q*fee])}}
+rows.push(['هزینه ثابت ماه',m,'','','','','', '',Number($('storeFixed').value)||0,'']);const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/^[\\s]*[=+@-]/,"'"+'render();calculate();if('serviceWorker'in navigator)').replaceAll('"','""')+'"').join(',')).join('\r\n');download('mouher-store-'+m+'.csv',csv,'text/csv;charset=utf-8')};
+
+render();renderStore();calculate();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 // Keep the guide in its own scrollable frame; native scrolling works on iPhone.
 if(location.hash==='#guide')show('guide');
 window.addEventListener('hashchange',()=>{if(location.hash==='#guide')show('guide');else if(location.hash==='#calculator')show('calculator')});
