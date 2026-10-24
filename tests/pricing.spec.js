@@ -323,10 +323,26 @@ test('history recommends a unique product price and exports only after approval'
  await save(page);
  await page.locator('[data-tab="store"]').click();
  await expect(page.locator('#recommendationList')).toContainText('۲٬۷۹۰٬۰۰۰');
- await expect(page.locator('#recommendationList')).toContainText('فقط یک نسخه قیمت داریم');
+ await expect(page.locator('#recommendationList')).toContainText('سابقه قبلی نداریم');
  await page.locator('#approvedPriceExport').click();
  await expect(page.locator('#publishStatus')).toContainText('هنوز قیمتی تأیید نشده');
  page.once('dialog',d=>d.accept());
  await page.locator('#recommendationList button').first().click();
  await expect(page.locator('#recommendationList')).toContainText('آخرین تأیید محلی');
+});
+
+test('historical CSV import recommends price and permits manual scenario adjustments',async({page})=>{
+ await page.locator('[data-tab="store"]').click();
+ const csv='collection,category,sku,name,date,basis,cost,usd,fx,extra,margin,round,actual,installmentEnabled,fee,vat,recover,settlement,growth,sold_cash,sold_bnpl\nپاییز,پالتو,MH-X,پالتو,2026-06-01,toman,1600000,,,150000,30,10000,,false,,,,now,,3,0\nپاییز,پالتو,MH-X,پالتو,2026-10-01,toman,1800000,,,150000,30,10000,,false,,,,now,,4,0';
+ await page.locator('#historyCsv').setInputFiles({name:'history.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
+ await expect(page.locator('#historyImportStatus')).toContainText('۲ نسخه');
+ await expect(page.locator('#recommendationList')).toContainText('۷');
+ await expect(page.locator('#recommendationList')).toContainText('۲٬۷۹۰٬۰۰۰');
+ const card=page.locator('#recommendationList .card').first();
+ await card.locator('[data-field="cost"]').fill('2000000');
+ await card.locator('[data-field="cost"]').dispatchEvent('change');
+ await expect(card).toContainText('۳٬۰۸۰٬۰۰۰');
+ page.once('dialog',dialog=>dialog.accept());
+ await card.locator('button').click();
+ await expect(card).toContainText('آخرین قیمت تأییدشده');
 });
