@@ -261,3 +261,18 @@ test('inflation reference remains optional and never overwrites manual growth',a
  await expect(page.locator('#growth')).toHaveValue('5');
  await expect(page.locator('#inflationBnplPreview')).not.toHaveText('—');
 });
+
+test('installment guide agrees with coat sale at actual cash price',async({page})=>{
+ await page.locator('#cost').fill('1800000');
+ await page.locator('#extra').fill('150000');
+ await page.locator('#margin').fill('30');
+ await page.locator('#fee').fill('13');
+ await page.locator('#vat').fill('10');
+ await page.locator('#growth').fill('7');
+ await page.locator('#settlement').selectOption('m2');
+ await expect(page.locator('#cash')).toContainText('۲٬۷۹۰٬۰۰۰');
+ await expect(page.locator('#bnpl')).toContainText('۳٬۷۳۰٬۰۰۰');
+ await expect(page.locator('#profit')).toContainText('۱۳۸٬۴۱۸');
+ await page.locator('[data-tab="guide"]').click();
+ await expect(page.frameLocator('#guideFrame').locator('#installment-guide')).toContainText('۱۳۸٬۴۱۸');
+});
