@@ -4,6 +4,7 @@ const ids=['name','sku','basis','cost','usd','fx','extra','margin','fee','vat','
 const num=id=>Math.max(0,Number($(id).value)||0);
 const fmt=n=>Number.isFinite(n)?Math.round(n).toLocaleString('fa-IR'):'—';
 const periods={now:[[0,1]],m1:[[1,1]],m2:[[2,1]],split2:[[1,.5],[2,.5]],split4:[[1,.25],[2,.25],[3,.25],[4,.25]]};
+const shopKey='mouher-shop-name-v1';$('shopName').value=localStorage.getItem(shopKey)||'Mouher';$('shopName').addEventListener('change',()=>localStorage.setItem(shopKey,$('shopName').value.trim()||'Mouher'));
 const key='mouher-pricing-products-v1';let result;let currentPhoto='';
 function previewPhoto(){const im=$('photoPreview');im.hidden=!currentPhoto;im.src=currentPhoto||'';$('removePhoto').hidden=!currentPhoto;}
 $('photo').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/')||file.size>15*1024*1024){alert('لطفاً عکس کمتر از ۱۵ مگابایت انتخاب کنید.');event.target.value='';return;}try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,440/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);currentPhoto=canvas.toDataURL('image/jpeg',.68);bitmap.close?.();previewPhoto();}catch{alert('خواندن این عکس ممکن نیست. یک فایل JPEG یا PNG انتخاب کنید.')}event.target.value=''});
