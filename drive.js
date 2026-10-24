@@ -2,18 +2,12 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const status=(message)=>{$('driveStatus').textContent=message};
- const configKey='mouher-google-oauth-client-id-v1';
- $('googleClientId').value=localStorage.getItem(configKey)||'';
- $('googleClientId').addEventListener('change',()=>localStorage.setItem(configKey,$('googleClientId').value.trim()));
- const shopKey='mouher-shop-name-v1';
- $('shopName').value=localStorage.getItem(shopKey)||'Mouher';
- $('shopName').addEventListener('change',()=>localStorage.setItem(shopKey,$('shopName').value.trim()||'Mouher'));
- function selectedShop(){const name=$('shopName').value.trim().replace(/[\\/\x00-\x1f]/g,' ').slice(0,70)||'Mouher';localStorage.setItem(shopKey,name);return name;}
+ const selectedShop=()=>($('shopName').value.trim().replace(/[\\/\x00-\x1f]/g,' ').slice(0,70)||'Mouher');
  let token=null,expires=0;
  function authenticate(){
   return new Promise((resolve,reject)=>{
-   const clientId=$('googleClientId').value.trim();
-   if(!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId))return reject(Error('ابتدا OAuth Client ID معتبر را وارد کنید.'));
+   const clientId=String(window.MOUHER_GOOGLE_CLIENT_ID||'').trim();
+   if(!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId))return reject(Error('اتصال گوگل هنوز توسط مدیر سایت راه‌اندازی نشده است. فعلاً از دانلود یا اشتراک فایل استفاده کنید.'));
    if(!window.google?.accounts?.oauth2)return reject(Error('سرویس ورود گوگل بارگذاری نشد. اتصال اینترنت را بررسی کنید.'));
    if(token&&Date.now()<expires-60000)return resolve(token);
    const client=google.accounts.oauth2.initTokenClient({
