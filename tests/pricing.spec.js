@@ -84,10 +84,11 @@ test('JSON backup exports saved products and does not auto-upload',async({page})
  expect(json.version).toBe(1);expect(json.products[0].data.sku).toBe('MH-SHIRT-001');
 });
 test('illustrated instructions and inflation growth guide load',async({page})=>{
- await page.locator('a[href="./data-guide.html"]').click();
- await expect(page).toHaveURL(/data-guide.html/);
- await expect(page.locator('img[src*="guide-cost.svg"]')).toBeVisible();
- await expect(page.locator('#monthly')).not.toHaveText('—');
+ await page.locator('[data-tab="guide"]').click();
+ const guide=page.frameLocator('#guideFrame');
+ await expect(guide.locator('img[src*="guide-cost.svg"]')).toBeVisible();
+ await expect(guide.locator('#monthly')).not.toHaveText('—');
+ await expect(guide.locator('#lesson9')).toBeVisible();
 });
 test('separate devices do not share stored products',async({browser})=>{
  const a=await browser.newContext(),b=await browser.newContext();
@@ -222,7 +223,7 @@ test('simple Google Drive onboarding has sign-in button and no developer credent
  await expect(page.locator('#driveCsv')).toBeVisible();
  await expect(page.locator('#googleClientId')).toHaveCount(0);
  await page.locator('#driveCsv').click();
- await expect(page.locator('#driveStatus')).toContainText('مدیر سایت');
+ await expect(page.locator('#driveStatus')).toContainText('در حال درخواست اجازه دسترسی محدود');
 });
 
 test('Google authentication uses temporary browser memory and offers session disconnect',async({page})=>{
