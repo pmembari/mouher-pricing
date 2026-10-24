@@ -31,7 +31,7 @@ function calculate(){
 function priceFor(d){
  const n=k=>Math.max(0,Number(d[k])||0);
  const replacement=d.basis==='usd'?n('usd')*n('fx'):n('cost');
- const total=replacement+n('extra'), margin=n('margin')/100,fee=n('fee')/100;
+ const total=replacement+n('extra'), margin=Math.min(.9,n('margin')/100),fee=n('fee')/100;
  const retained=1-fee*(1+(d.recover?0:n('vat')/100));
  const g=n('growth')/100, stages=periods[d.settlement]||periods.now;
  const df=stages.reduce((sum,[months,part])=>sum+part/Math.pow(1+g,months),0);
