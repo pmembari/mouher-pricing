@@ -70,10 +70,7 @@
   try{
    status('در حال درخواست اجازه دسترسی محدود به Google Drive…');
    await authenticate();
-   status('در حال آماده‌سازی پوشه تاریخ‌دار…');
-   let parent='root';
    const shop=selectedShop();
-   for(const name of [shop,...folderDate()])parent=await folder(name,parent);
    let items=[];
    const products=saved();
    if(mode==='Csv'){
@@ -92,6 +89,9 @@
    }
    if(!items.length){status('موردی برای ارسال وجود ندارد. ابتدا محصول یا عکس ذخیره کنید.');return}
    if(!confirm('تعداد '+items.length+' فایل در Google Drive شما، پوشه '+shop+'/'+folderDate().join('/')+' بارگذاری شود؟')){status('ارسال لغو شد.');return}
+   status('در حال آماده‌سازی پوشه تاریخ‌دار…');
+   let parent='root';
+   for(const name of [shop,...folderDate()])parent=await folder(name,parent);
    let count=0;
    for(const [name,blob,mime] of items){status('در حال بارگذاری '+(count+1)+' از '+items.length+'…');await upload(parent,name,blob,mime);count++}
    status('✅ '+count+' فایل با موفقیت در پوشه '+shop+'/'+folderDate().join('/')+' ذخیره شد.');
