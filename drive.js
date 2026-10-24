@@ -5,6 +5,10 @@
  const configKey='mouher-google-oauth-client-id-v1';
  $('googleClientId').value=localStorage.getItem(configKey)||'';
  $('googleClientId').addEventListener('change',()=>localStorage.setItem(configKey,$('googleClientId').value.trim()));
+ const shopKey='mouher-shop-name-v1';
+ $('shopName').value=localStorage.getItem(shopKey)||'Mouher';
+ $('shopName').addEventListener('change',()=>localStorage.setItem(shopKey,$('shopName').value.trim()||'Mouher'));
+ function selectedShop(){const name=$('shopName').value.trim().replace(/[\\/\x00-\x1f]/g,' ').slice(0,70)||'Mouher';localStorage.setItem(shopKey,name);return name;}
  let token=null,expires=0;
  function authenticate(){
   return new Promise((resolve,reject)=>{
@@ -68,7 +72,8 @@
    await authenticate();
    status('در حال آماده‌سازی پوشه تاریخ‌دار…');
    let parent='root';
-   for(const name of ['Mouher Pricing',...folderDate()])parent=await folder(name,parent);
+   const shop=selectedShop();
+   for(const name of [shop,...folderDate()])parent=await folder(name,parent);
    let items=[];
    const products=saved();
    if(mode==='Csv'){
@@ -86,10 +91,10 @@
     }
    }
    if(!items.length){status('موردی برای ارسال وجود ندارد. ابتدا محصول یا عکس ذخیره کنید.');return}
-   if(!confirm('تعداد '+items.length+' فایل در Google Drive شما، پوشه Mouher Pricing/'+folderDate().join('/')+' بارگذاری شود؟')){status('ارسال لغو شد.');return}
+   if(!confirm('تعداد '+items.length+' فایل در Google Drive شما، پوشه '+shop+'/'+folderDate().join('/')+' بارگذاری شود؟')){status('ارسال لغو شد.');return}
    let count=0;
    for(const [name,blob,mime] of items){status('در حال بارگذاری '+(count+1)+' از '+items.length+'…');await upload(parent,name,blob,mime);count++}
-   status('✅ '+count+' فایل با موفقیت در پوشه Mouher Pricing/'+folderDate().join('/')+' ذخیره شد.');
+   status('✅ '+count+' فایل با موفقیت در پوشه '+shop+'/'+folderDate().join('/')+' ذخیره شد.');
   }catch(error){status('⚠️ '+error.message)}finally{button.disabled=false}
  }
  ['Csv','Backup','Images'].forEach(mode=>$('drive'+mode).addEventListener('click',()=>run(mode)));
