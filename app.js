@@ -5,9 +5,9 @@ const num=id=>Math.max(0,Number($(id).value)||0);
 const fmt=n=>Number.isFinite(n)?Math.round(n).toLocaleString('fa-IR'):'—';
 const periods={now:[[0,1]],m1:[[1,1]],m2:[[2,1]],split2:[[1,.5],[2,.5]],split4:[[1,.25],[2,.25],[3,.25],[4,.25]]};
 const key='mouher-pricing-products-v1';let result;let currentPhoto='';
-function previewPhoto(){const im=$('photoPreview');const remote=$('publicPhoto').value.trim();const validRemote=remote.startsWith('https://pmembari.github.io/mouher-pricing/images/products/');im.hidden=!(validRemote||currentPhoto);im.src=validRemote?remote:(currentPhoto||'');$('removePhoto').hidden=!(currentPhoto||remote);}
+function previewPhoto(){const im=$('photoPreview');im.hidden=!currentPhoto;im.src=currentPhoto||'';$('removePhoto').hidden=!currentPhoto;}
 $('photo').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/')||file.size>15*1024*1024){alert('لطفاً عکس کمتر از ۱۵ مگابایت انتخاب کنید.');event.target.value='';return;}try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,440/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);currentPhoto=canvas.toDataURL('image/jpeg',.68);bitmap.close?.();previewPhoto();}catch{alert('خواندن این عکس ممکن نیست. یک فایل JPEG یا PNG انتخاب کنید.')}event.target.value=''});
-$('removePhoto').onclick=()=>{currentPhoto='';$('publicPhoto').value='';previewPhoto()};$('publicPhoto').addEventListener('input',previewPhoto);
+$('removePhoto').onclick=()=>{currentPhoto='';previewPhoto()};
 function calculate(){
  $('tomanCost').hidden=$('basis').value!=='toman';$('usdCost').hidden=$('basis').value!=='usd';
  const replacement=$('basis').value==='toman'?num('cost'):num('usd')*num('fx');
@@ -44,8 +44,8 @@ function priceFor(d){
  return {valid,cash,bnpl,actual,total,pv,contribution:valid?pv-total:null};
 }
 
-const snapshot=()=>({...Object.fromEntries(ids.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),photo:currentPhoto,publicPhoto:$('publicPhoto').value.trim()});
-function load(s){$('publicPhoto').value=typeof s.publicPhoto==='string'?s.publicPhoto:'';currentPhoto=typeof s.photo==='string'&&s.photo.startsWith('data:image/jpeg;base64,')?s.photo:'';previewPhoto();ids.forEach(id=>{if(s[id]!==undefined){if($(id).type==='checkbox')$(id).checked=!!s[id];else $(id).value=String(s[id])}});calculate()}
+const snapshot=()=>({...Object.fromEntries(ids.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),photo:currentPhoto});
+function load(s){currentPhoto=typeof s.photo==='string'&&s.photo.startsWith('data:image/jpeg;base64,')?s.photo:'';previewPhoto();ids.forEach(id=>{if(s[id]!==undefined){if($(id).type==='checkbox')$(id).checked=!!s[id];else $(id).value=String(s[id])}});calculate()}
 function saved(){try{const list=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(list)?list:[]}catch{return []}}
 function persist(items){localStorage.setItem(key,JSON.stringify(items));render()}
 function show(tab){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.tab===tab))}
@@ -60,7 +60,7 @@ function render(){
   row.className='saved';row.style.alignItems='flex-start';b.textContent=d.name||'بدون نام';
   desc.textContent=(d.sku||'بدون کد')+' · '+new Date(entry.at).toLocaleDateString('fa-IR');
   pricing.textContent=p.valid?'نقدی: '+fmt(p.cash)+' | اقساط نظری: '+fmt(p.bnpl)+' تومان':'⚠ اطلاعات لازم برای قیمت‌گذاری کامل نیست';
-  pricing.style.color=p.valid?'#176344':'#a05b20';pricing.style.fontWeight='bold';title.append(b,desc,pricing);const imageURL=typeof d.publicPhoto==='string'&&d.publicPhoto.startsWith('https://pmembari.github.io/mouher-pricing/images/products/')?d.publicPhoto:d.photo;if(typeof imageURL==='string'&&(imageURL.startsWith('data:image/jpeg;base64,')||imageURL.startsWith('https://pmembari.github.io/mouher-pricing/images/products/'))){const thumb=document.createElement('img');thumb.src=imageURL;thumb.alt='عکس محصول';thumb.width=70;thumb.height=70;thumb.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:12px';row.append(thumb)}
+  pricing.style.color=p.valid?'#176344':'#a05b20';pricing.style.fontWeight='bold';title.append(b,desc,pricing);if(typeof d.photo==='string'&&d.photo.startsWith('data:image/jpeg;base64,')){const thumb=document.createElement('img');thumb.src=d.photo;thumb.alt='عکس محصول';thumb.width=70;thumb.height=70;thumb.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:12px';row.append(thumb);const share=document.createElement('button');share.textContent='اشتراک عکس';share.onclick=()=>shareProductPhoto(d.photo,d.sku||d.name||'product');title.append(share)}
   open.textContent='ویرایش';open.onclick=()=>{load(d);show('calculator');window.scrollTo(0,0)};
   del.textContent='حذف';del.onclick=()=>{if(confirm('این محصول حذف شود؟'))persist(saved().filter((_,j)=>j!==i))};
   const buttons=document.createElement('div');buttons.style.display='flex';buttons.style.gap='6px';buttons.append(open,del);
@@ -74,6 +74,18 @@ $('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصو�
 $('copy').onclick=async()=>{const t='موهر - '+($('name').value||'محصول')+'\nقیمت نقدی: '+fmt(result.cash)+' تومان\nقیمت نظری اقساطی: '+fmt(result.bnpl)+' تومان\nمشارکت اقتصادی: '+fmt(result.profit)+' تومان';try{await navigator.clipboard.writeText(t);alert('نتایج کپی شد')}catch{prompt('متن را کپی کنید',t)}};
 function download(filename,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('export').onclick=()=>download('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
+async function shareProductPhoto(data,filename){
+ if(!data||!data.startsWith('data:image/jpeg;base64,')){alert('ابتدا عکس محصول را انتخاب کنید.');return}
+ const bytes=Uint8Array.from(atob(data.split(',')[1]),c=>c.charCodeAt(0));
+ const safe=String(filename).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,70)||'product';
+ const file=new File([bytes],safe+'.jpg',{type:'image/jpeg'});
+ if(navigator.canShare?.({files:[file]})&&navigator.share){
+  try{await navigator.share({files:[file],title:'عکس محصول موهر'});return}catch(e){if(e.name==='AbortError')return}
+ }
+ const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ alert('عکس دانلود شد. برای ارسال به Google Drive آن را از Files بارگذاری کنید.');
+}
+$('sharePhoto').onclick=()=>shareProductPhoto(currentPhoto,$('sku').value||$('name').value||'product');
 async function shareFile(filename,content,type){
  const file=new File([content],filename,{type});
  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
