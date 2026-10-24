@@ -51,14 +51,61 @@
 <div class="actions"><button id="export">دریافت پشتیبان JSON</button><label class="file">بازیابی پشتیبان <input type="file" id="import" accept=".json,application/json" hidden></label><button id="csv">دریافت CSV</button></div>
 <p class="hint">محصولات و تصاویر روی همین دستگاه می‌مانند. برای جلوگیری از گم‌شدن آن‌ها، گاهی نسخه پشتیبان تهیه کنید. فایل‌های Drive تابع تنظیمات اشتراک حساب شما هستند.</p>
 </div></section>
-<section id="guide" class="panel guide"><div class="card"><h2>راهنمای استفاده — قدم‌به‌قدم</h2><p class="notice">بدون نرخ کارمزد واقعی و اطلاعات تسویه، قیمت اقساطی قابل اتکا نیست.</p>
-<h3>۱. هزینه خرید مجدد</h3><p>از تأمین‌کننده بپرسید اگر امروز یک عدد از این محصول را مجدد سفارش دهید چقدر باید بپردازید. قیمت قدیمی موجودی ملاک نیست.</p>
-<h3>۲. هزینه‌های مستقیم</h3><p>بسته‌بندی، ارسال پرداختی فروشگاه و هر هزینه‌ای که با یک فروش رخ می‌دهد را جمع کنید. مراقب تکرار هزینه‌ها باشید.</p>
-<h3>۳. حاشیه سود</h3><p>مثلاً اگر هزینه کل ۷۰۰ هزار تومان و حاشیه سود هدف ۳۰٪ باشد قیمت نقدی ۱ میلیون تومان است، نه ۹۱۰ هزار تومان.</p>
-<h3>۴. دلار و تتر</h3><p>فقط وقتی هزینه جایگزینی محصول با ارز تغییر می‌کند استفاده کنید. نرخ قابل اتکا را به تومان از منبعی که واقعاً با آن تأمین می‌کنید وارد کنید. نرخ به صورت خودکار دریافت نمی‌شود.</p>
-<h3>۵. اسنپ‌پی</h3><p>کارمزد و مالیات را از قرارداد و حسابدار بررسی کنید. برنامه پرداخت اقساط مشتری با تاریخ واریز وجه به فروشگاه ممکن است متفاوت باشد.</p>
-<h3>۶. رشد هزینه تأمین</h3><p>قیمت خرید همان کالا را در ماه‌های گذشته مقایسه کنید و برای آینده سناریو بسازید. CPI عمومی الزاماً رشد هزینه پوشاک شما نیست.</p>
-<h3>۷. قیمت اقساطی نظری</h3><p>نرخی که ارزش اقتصادی دریافتی با تأخیر را حفظ می‌کند نمایش داده می‌شود؛ مجوز ارائه قیمت متفاوت به مشتری نیست.</p>
-<h3>۸. ذخیره و نسخه پشتیبان</h3><p>نام و اطلاعات محصول را وارد و روی ذخیره بزنید. با خروجی JSON نسخه پشتیبان بگیرید.</p>
-<h3>۹. نصب آیفون</h3><p>آدرس سایت را در Safari باز کنید، Share را بزنید و Add to Home Screen را انتخاب کنید.</p></div></section>
+<section id="guide" class="panel guide">
+<style>
+.guide .lesson{border:1px solid #e0e9df;border-radius:17px;padding:16px;margin:15px 0;background:#fff}
+.guide .lesson h3{margin:0 0 8px;color:#174d39}
+.guide .example{background:#f2f7f1;border-radius:13px;padding:12px;margin:11px 0;font-size:13px;line-height:1.9}
+.guide .example strong{color:#174d39}
+.guide .visual{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:11px 0}
+.guide .visual>span{flex:1;min-width:94px;border:1px solid #dce8df;background:#f8fbf7;border-radius:12px;padding:10px 7px;text-align:center;font-size:12px;line-height:1.8}
+.guide .visual b{display:block;color:#15573e;font-size:15px}
+.guide .test{border-right:4px solid #8eb59b;background:#fafcf9;padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.9}
+.guide .bars{display:grid;gap:8px;margin:12px 0}.guide .bar{display:flex;align-items:center;gap:9px;font-size:12px}.guide .bar label{width:99px;margin:0;font-size:12px}.guide .bar i{display:block;height:16px;background:#7faa8c;border-radius:6px}.guide .bar em{font-style:normal;white-space:nowrap}
+.guide .arrow{align-self:center;color:#3a7656;font-size:21px}
+.guide .step-pill{border-radius:12px;background:#e9f3e9;padding:9px;font-size:12px;text-align:center;flex:1;min-width:98px}
+.guide .muted{color:#6a786e;font-size:12px}
+</style>
+<div class="card"><h2>راهنمای استفاده — با مثال و تمرین</h2>
+<p class="notice">بدون نرخ کارمزد واقعی و اطلاعات تسویه، قیمت اقساطی قابل اتکا نیست. عددهای این راهنما فرضی‌اند؛ قبل از قیمت‌گذاری واقعی، قرارداد و هزینه‌های فروشگاه خودتان را بررسی کنید.</p>
+<p>برای هر بخش: مثال را ببینید، تصویر شماتیک را بررسی کنید و تمرین کوتاه را در تب «محاسبه» انجام دهید.</p>
+<div class="lesson"><h3>۱. هزینه خرید مجدد 🧵</h3><p>از تأمین‌کننده بپرسید اگر <b>امروز</b> یک عدد از همین محصول را سفارش دهید، چقدر پرداخت می‌کنید. قیمت خرید قدیمی موجودی ملاک نیست.</p>
+<div class="visual"><span>خرید قدیمی<b>۶۰۰٬۰۰۰ تومان</b></span><span class="arrow">←</span><span>سفارش امروز<b>۸۰۰٬۰۰۰ تومان</b></span></div>
+<div class="example"><strong>مثال:</strong> مانتویی را دو ماه پیش ۶۰۰ هزار تومان خریده‌اید، اما تأمین‌کننده امروز ۸۰۰ هزار تومان می‌گیرد. مقدار «هزینه خرید مجدد» = <b>۸۰۰٬۰۰۰ تومان</b>.</div>
+<div class="test"><b>تمرین:</b> قیمت قدیمی ۶۰۰٬۰۰۰ و قیمت فعلی ۸۰۰٬۰۰۰ است. در کادر «هزینه خرید مجدد» عدد ۸۰۰۰۰۰ را وارد کنید؛ نتیجه را با واردکردن ۶۰۰۰۰۰ مقایسه کنید.</div></div>
+<div class="lesson"><h3>۲. هزینه‌های مستقیم 📦</h3><p>هزینه‌هایی را حساب کنید که <b>به‌ازای هر فروش</b> پرداخت می‌شوند؛ یک هزینه را دوبار نشمارید.</p>
+<div class="visual"><span>بسته‌بندی<b>۳۰٬۰۰۰</b></span><span>ارسالِ فروشگاه<b>۶۰٬۰۰۰</b></span><span>سایر هزینه‌ها<b>۱۰٬۰۰۰</b></span><span>جمع<b>۱۰۰٬۰۰۰</b></span></div>
+<div class="example"><strong>مثال:</strong> خرید مجدد ۸۰۰٬۰۰۰ + هزینه مستقیم ۱۰۰٬۰۰۰ = <b>هزینه کل ۹۰۰٬۰۰۰ تومان</b>. اگر مشتری هزینه ارسال را جداگانه می‌پردازد و فروشگاه آن را متحمل نمی‌شود، آن را دوباره اضافه نکنید.</div>
+<div class="test"><b>تمرین:</b> «سایر هزینه‌های مستقیم» را ۱۰۰۰۰۰ بگذارید و ببینید «هزینه مستقیم کل» چگونه تغییر می‌کند.</div></div>
+<div class="lesson"><h3>۳. حاشیه سود 🎯</h3><p>حاشیه سود ۳۰٪ یعنی ۳۰٪ از <b>قیمت فروش</b> سود باشد، نه ۳۰٪ اضافه‌شده به هزینه.</p>
+<div class="visual"><span>هزینه کل<b>۷۰۰٬۰۰۰</b></span><span>سود هدف<b>۳۰۰٬۰۰۰</b></span><span>قیمت نقدی<b>۱٬۰۰۰٬۰۰۰</b></span></div>
+<div class="bars"><div class="bar"><label>هزینه از فروش</label><i style="width:70%"></i><em>۷۰٪</em></div><div class="bar"><label>سود از فروش</label><i style="width:30%;background:#d6ad71"></i><em>۳۰٪</em></div></div>
+<div class="example"><strong>محاسبه:</strong> ۷۰۰٬۰۰۰ ÷ (۱ − ۰٫۳۰) = <b>۱٬۰۰۰٬۰۰۰ تومان</b>. ضرب هزینه در ۱٫۳، فقط ۹۱۰٬۰۰۰ می‌شود و حاشیه واقعی ۳۰٪ نیست.</div>
+<div class="test"><b>تمرین:</b> هزینه خرید مجدد را ۷۰۰۰۰۰، هزینه‌های دیگر را صفر و حاشیه هدف را ۳۰ وارد کنید. قیمت نقدی پیشنهادی باید ۱٬۰۰۰٬۰۰۰ تومان شود (با گردکردن پیش‌فرض).</div></div>
+<div class="lesson"><h3>۴. دلار و تتر 💱</h3><p>فقط وقتی هزینه جایگزینی کالا واقعاً با ارز تغییر می‌کند، مبنای دلاری را انتخاب کنید. نرخ را از منبع واقعی تأمین خودتان بگیرید؛ برنامه نرخ زنده دریافت نمی‌کند.</p>
+<div class="visual"><span>هزینه کالا<b>۱۲ دلار</b></span><span>نرخ فرضی<b>۱۵۰٬۰۰۰ تومان</b></span><span>هزینه جایگزینی<b>۱٬۸۰۰٬۰۰۰ تومان</b></span></div>
+<div class="example"><strong>محاسبه:</strong> ۱۲ × ۱۵۰٬۰۰۰ = <b>۱٬۸۰۰٬۰۰۰ تومان</b>. این نرخ فقط مثال آموزشی است، نه نرخ بازار امروز.</div>
+<div class="test"><b>تمرین:</b> مبنا را روی «دلار یا تتر» بگذارید، ۱۲ و ۱۵۰۰۰۰ را وارد کنید. سپس نرخ را به ۱۶۰۰۰۰ تغییر دهید و اثر آن را روی قیمت نقدی ببینید.</div></div>
+<div class="lesson"><h3>۵. اسنپ‌پی و زمان تسویه 🧾</h3><p>کارمزد و مالیات آن را از قرارداد و حسابدار تأیید کنید. اقساط مشتری لزوماً همان زمان واریز پول به فروشگاه نیست.</p>
+<div class="visual"><span>مشتری<b>۴ قسط</b><span class="muted">طبق قرارداد مشتری</span></span><span class="arrow">≠</span><span>فروشگاه<b>زمان تسویه جدا</b><span class="muted">طبق قرارداد پذیرنده</span></span></div>
+<div class="example"><strong>مثال فرضی:</strong> از فروش ۱٬۰۰۰٬۰۰۰ تومانی با کارمزد ۵٪ و مالیات صفر در این مثال، <b>۹۵۰٬۰۰۰ تومان</b> قبل از اثر تأخیر باقی می‌ماند. مالیات واقعی کارمزد ممکن است این نتیجه را عوض کند.</div>
+<div class="test"><b>تمرین:</b> کارمزد را ۵، مالیات را صفر، و برنامه تسویه را یک‌بار «اکنون» و بار دیگر «دو ماه بعد» بگذارید؛ با رشد هزینه مثبت، ارزش اقتصادی دریافتی را مقایسه کنید.</div></div>
+<div class="lesson"><h3>۶. رشد هزینه تأمین 📈</h3><p>تغییر قیمت خرید <b>همان کالا</b> را بین ماه‌ها مقایسه کنید و برای آینده سناریو بسازید. شاخص تورم عمومی لزوماً روند هزینه لباس شما نیست.</p>
+<div class="bars"><div class="bar"><label>ماه قبل</label><i style="width:72%"></i><em>۸۰۰٬۰۰۰</em></div><div class="bar"><label>این ماه</label><i style="width:80%;background:#d6ad71"></i><em>۸۸۰٬۰۰۰</em></div></div>
+<div class="example"><strong>محاسبه:</strong> (۸۸۰٬۰۰۰ ÷ ۸۰۰٬۰۰۰ − ۱) × ۱۰۰ = <b>۱۰٪ رشد ماهانه</b> در این بازه. تکرار همین نرخ در آینده فقط یک سناریو است، نه پیش‌بینی قطعی.</div>
+<div class="test"><b>تمرین:</b> رشد ماهانه را ۰، سپس ۵ و سپس ۱۰ وارد کنید؛ اثر تأخیر تسویه روی ارزش اقتصادی دریافتی را مقایسه کنید.</div></div>
+<div class="lesson"><h3>۷. قیمت اقساطی نظری ⚖️</h3><p>برنامه، قیمت مرجعی را محاسبه می‌کند که بعد از کارمزد و تأخیر، ارزش اقتصادی فروش را حفظ کند. این عدد <b>مجوز ارائه قیمت متفاوت به مشتری نیست</b>.</p>
+<div class="visual"><span>قیمت نقدی<b>۱٬۰۰۰٬۰۰۰</b></span><span>کارمزد و تأخیر<b>کاهش ارزش دریافتی</b></span><span>قیمت نظری<b>ممکن است بالاتر باشد</b></span></div>
+<div class="example"><strong>مثال فرضی ساده:</strong> اگر فقط کارمزد ۵٪ باشد و تسویه فوری انجام شود، قیمت لازم برای دریافت خالص ۱٬۰۰۰٬۰۰۰ تومان حدود <b>۱٬۰۵۲٬۶۳۲ تومان</b> است؛ با گردکردن به مضرب ۱۰٬۰۰۰، <b>۱٬۰۶۰٬۰۰۰ تومان</b>. تأخیر و مالیات ممکن است مبلغ را بالاتر ببرند.</div>
+<div class="test"><b>تمرین:</b> هزینه کل ۷۰۰۰۰۰، حاشیه هدف ۳۰، کارمزد ۵، مالیات ۰، رشد ۰ و تسویه «اکنون» را قرار دهید. خروجی نظری را با قیمت نقدی مقایسه کنید و شرایط قانونی/قراردادی ارائه قیمت را جدا بررسی کنید.</div></div>
+<div class="lesson"><h3>۸. ذخیره و نسخه پشتیبان 💾</h3><p>هر محصول را با نام و کد کالا ذخیره کنید. داده ابتدا روی <b>همین دستگاه</b> است. برای بازیابی پس از تعویض گوشی، نسخه JSON نگه دارید.</p>
+<div class="visual"><span>✍️ ثبت محصول<b>ذخیره</b></span><span class="arrow">←</span><span>📄 فایل JSON<b>دریافت پشتیبان</b></span><span class="arrow">←</span><span>🔁 بازیابی<b>در گوشی دیگر</b></span></div>
+<div class="example"><strong>مثال:</strong> «پیراهن قهوه‌ای» با کد SH-01 را ذخیره کنید؛ در تب «محصولات» گزینه «دریافت پشتیبان JSON» را بزنید. برای آزمون بازیابی، فایل را در یک مرورگر یا دستگاه آزمایشی وارد کنید. <b>بازیابی جایگزین محصولات فعلی می‌شود.</b></div>
+<div class="test"><b>تمرین:</b> قبل از هر آزمایش بازیابی، از محصولات فعلی خروجی JSON بگیرید. برای ذخیره روی Google Drive شخصی نیز از دکمه‌های مجزا و تأیید آپلود استفاده کنید.</div></div>
+<div class="lesson"><h3>۹. نصب در آیفون 📱</h3><p>در Safari آدرس سایت را باز کنید، منوی Share را بزنید و «Add to Home Screen» را انتخاب کنید.</p>
+<div class="visual"><div class="step-pill">① Safari<br><b>بازکردن سایت</b></div><div class="step-pill">② Share<br><b>اشتراک‌گذاری</b></div><div class="step-pill">③ Add to Home Screen<br><b>افزودن به صفحه اصلی</b></div></div>
+<div class="example"><strong>مثال:</strong> سایت <code dir="ltr">pmembari.github.io/mouher-pricing/</code> را در Safari باز کنید؛ پس از نصب، آیکون موهر روی صفحه اصلی ظاهر می‌شود.</div>
+<div class="test"><b>تمرین:</b> آیکون را باز کنید، یک قیمت را محاسبه کنید، سپس اتصال اینترنت را موقتاً قطع کنید و عملکرد محاسبه آفلاین را بررسی کنید. برای آپلود به Google Drive دوباره اینترنت لازم است.</div></div>
+<p class="notice">این مثال‌ها آموزشی هستند و جای قرارداد اسنپ‌پی، بررسی مالیاتی و تصمیم قیمت‌گذاری فروشگاه را نمی‌گیرند.</p>
+</div></section>
 </main><footer>Mouher Pricing · نسخه ۱ · محاسبه‌های آموزشی و مدیریتی</footer><script src="./app.js" defer></script><script src="./google-config.js" defer></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="./drive.js" defer></script></body></html>
