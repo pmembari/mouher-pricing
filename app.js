@@ -71,13 +71,26 @@ $('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصو�
 $('copy').onclick=async()=>{const t='موهر - '+($('name').value||'محصول')+'\nقیمت نقدی: '+fmt(result.cash)+' تومان\nقیمت نظری اقساطی: '+fmt(result.bnpl)+' تومان\nمشارکت اقتصادی: '+fmt(result.profit)+' تومان';try{await navigator.clipboard.writeText(t);alert('نتایج کپی شد')}catch{prompt('متن را کپی کنید',t)}};
 function download(filename,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('export').onclick=()=>download('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
-$('csv').onclick=()=>{
+async function shareFile(filename,content,type){
+ const file=new File([content],filename,{type});
+ if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+  try{await navigator.share({files:[file],title:'فایل قیمت‌گذاری موهر'});return}
+  catch(error){if(error.name==='AbortError')return}
+ }
+ download(filename,content,type);
+ alert('فایل دانلود شد. از برنامه Files یا Downloads آیفون، Share را بزنید و Google Drive را انتخاب کنید. اگر Drive نصب نیست، آن را نصب و وارد حساب خود شوید.');
+}
+$('shareBackup').onclick=()=>shareFile('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
+
+function exportCsv(share=false){
  const columns=['نام محصول','کد کالا','مبنای هزینه','هزینه جایگزینی تومان','هزینه مستقیم کل تومان','حاشیه هدف درصد','کارمزد درصد','مالیات کارمزد درصد','مالیات قابل بازیافت','برنامه تسویه','رشد ماهانه درصد','قیمت نقدی پیشنهادی تومان','قیمت نظری اقساطی تومان','قیمت فروش بررسی شده تومان','ارزش اقتصادی وجوه تومان','مشارکت اقتصادی تومان','وضعیت','آخرین ذخیره'];
  const records=saved().map(({data:d,at})=>{const p=priceFor(d);return [d.name||'',d.sku||'',d.basis||'toman',d.basis==='usd'?(Number(d.usd)||0)*(Number(d.fx)||0):d.cost||0,p.total,d.margin||'',d.fee||'',d.vat||'',d.recover?'بله':'خیر',d.settlement||'',d.growth||'',p.valid?p.cash:'',p.valid?p.bnpl:'',p.valid?p.actual:'',p.valid?Math.round(p.pv):'',p.valid?Math.round(p.contribution):'',p.valid?'آماده بررسی':'ناقص',at]};
  });
  const escapeCell=x=>'"'+String(x??'').replaceAll('"','""')+'"';
- download('mouher-price-list.csv','\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n'),'text/csv;charset=utf-8')
-};
+ const csv='\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n');if(share)return shareFile('mouher-price-list.csv',csv,'text/csv;charset=utf-8');download('mouher-price-list.csv',csv,'text/csv;charset=utf-8');
+}
+$('csv').onclick=()=>exportCsv(false);
+$('shareCsv').onclick=()=>exportCsv(true);
 $('searchProducts').addEventListener('input',render);
 
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.version!==1||!Array.isArray(data.products)||data.products.length>10000||!data.products.every(x=>x&&x.data&&typeof x.data==='object'))throw Error();if(confirm('محصولات فعلی با نسخه پشتیبان جایگزین شوند؟'))persist(data.products)}catch{alert('نسخه پشتیبان نامعتبر است')}e.target.value=''};
