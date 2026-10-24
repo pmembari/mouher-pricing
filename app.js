@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id);
-const ids=['installmentEnabled','name','sku','basis','cost','usd','fx','extra','margin','fee','vat','recover','settlement','growth','round','actual'];
+const ids=['installmentEnabled','collection','category','name','sku','basis','cost','usd','fx','extra','margin','fee','vat','recover','settlement','growth','round','actual'];
 const num=id=>Math.max(0,Number($(id).value)||0);
 const fmt=n=>Number.isFinite(n)?Math.round(n).toLocaleString('fa-IR'):'—';
 const periods={now:[[0,1]],m1:[[1,1]],m2:[[2,1]],split2:[[1,.5],[2,.5]],split4:[[1,.25],[2,.25],[3,.25],[4,.25]]};
@@ -75,7 +75,7 @@ function render(){
 
 ids.forEach(id=>{['input','change'].forEach(event=>$(id).addEventListener(event,calculate))});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>show(b.dataset.tab));
-$('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصول را وارد کنید.');const items=saved(),data=snapshot(),at=new Date().toISOString();const same=items.findIndex(x=>data.sku&&x.data.sku===data.sku);if(same>=0){if(!confirm('محصول دارای همین کد جایگزین شود؟'))return;items[same]={data,at}}else items.unshift({data,at});try{persist(items);recordPriceHistory(data,at);alert('محصول و نسخه قیمت در همین دستگاه ذخیره شد.')}catch{alert('ذخیره در این مرورگر ممکن نیست.')}};
+$('save').onclick=()=>{if(!$('name').value.trim())return alert('نام محصول را وارد کنید.');const items=saved(),data=snapshot(),at=new Date().toISOString();const same=items.findIndex(x=>data.sku&&x.data.sku===data.sku&&(x.data.collection||'')===(data.collection||'')&&(x.data.category||'')===(data.category||''));if(same>=0){if(!confirm('محصول دارای همین کد جایگزین شود؟'))return;items[same]={data,at}}else items.unshift({data,at});try{persist(items);recordPriceHistory(data,at);alert('محصول و نسخه قیمت در همین دستگاه ذخیره شد.')}catch{alert('ذخیره در این مرورگر ممکن نیست.')}};
 $('copy').onclick=async()=>{const t='موهر - '+($('name').value||'محصول')+'\nقیمت نقدی: '+fmt(result.cash)+' تومان\nقیمت نظری اقساطی: '+fmt(result.bnpl)+' تومان\nمشارکت اقتصادی: '+fmt(result.profit)+' تومان';try{await navigator.clipboard.writeText(t);alert('نتایج کپی شد')}catch{prompt('متن را کپی کنید',t)}};
 function download(filename,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('export').onclick=()=>download('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
@@ -103,8 +103,8 @@ async function shareFile(filename,content,type){
 $('shareBackup').onclick=()=>shareFile('mouher-pricing-backup.json',JSON.stringify({version:1,products:saved()},null,2),'application/json');
 
 function exportCsv(share=false){
- const columns=['نام محصول','کد کالا','روش فروش','مبنای هزینه','هزینه جایگزینی تومان','هزینه مستقیم کل تومان','حاشیه هدف درصد','کارمزد درصد','مالیات کارمزد درصد','مالیات قابل بازیافت','برنامه تسویه','رشد ماهانه درصد','قیمت نقدی پیشنهادی تومان','قیمت نظری اقساطی تومان','قیمت فروش بررسی شده تومان','ارزش اقتصادی وجوه تومان','مشارکت اقتصادی تومان','وضعیت','آخرین ذخیره'];
- const records=saved().map(({data:d,at})=>{const p=priceFor(d);return [d.name||'',d.sku||'',p.installment?'نقدی و اقساطی':'فقط نقدی',d.basis||'toman',d.basis==='usd'?(Number(d.usd)||0)*(Number(d.fx)||0):d.cost||0,p.total,d.margin||'',d.fee||'',d.vat||'',d.recover?'بله':'خیر',d.settlement||'',d.growth||'',p.valid?p.cash:'',p.valid&&p.installment?p.bnpl:'',p.valid?p.actual:'',p.valid?Math.round(p.pv):'',p.valid?Math.round(p.contribution):'',p.valid?'آماده بررسی':'ناقص',at];
+ const columns=['نام محصول','کد کالا','کالکشن','دسته','روش فروش','مبنای هزینه','هزینه جایگزینی تومان','هزینه مستقیم کل تومان','حاشیه هدف درصد','کارمزد درصد','مالیات کارمزد درصد','مالیات قابل بازیافت','برنامه تسویه','رشد ماهانه درصد','قیمت نقدی پیشنهادی تومان','قیمت نظری اقساطی تومان','قیمت فروش بررسی شده تومان','ارزش اقتصادی وجوه تومان','مشارکت اقتصادی تومان','وضعیت','آخرین ذخیره'];
+ const records=saved().map(({data:d,at})=>{const p=priceFor(d);return [d.name||'',d.sku||'',d.collection||'',d.category||'',p.installment?'نقدی و اقساطی':'فقط نقدی',d.basis||'toman',d.basis==='usd'?(Number(d.usd)||0)*(Number(d.fx)||0):d.cost||0,p.total,d.margin||'',d.fee||'',d.vat||'',d.recover?'بله':'خیر',d.settlement||'',d.growth||'',p.valid?p.cash:'',p.valid&&p.installment?p.bnpl:'',p.valid?p.actual:'',p.valid?Math.round(p.pv):'',p.valid?Math.round(p.contribution):'',p.valid?'آماده بررسی':'ناقص',at];
  });
  const escapeCell=x=>{let v=String(x??'');if(/^[\s\u0000-\u001f]*[=+@-]/u.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'};
  const csv='\ufeff'+[columns,...records].map(r=>r.map(escapeCell).join(',')).join('\r\n');if(share==='return')return csv;if(share)return shareFile('mouher-price-list.csv',csv,'text/csv;charset=utf-8');download('mouher-price-list.csv',csv,'text/csv;charset=utf-8');
@@ -133,16 +133,18 @@ const historyKey='mouher-pricing-history-v1',salesKey='mouher-store-sales-v1',fi
 function readStore(k,fallback){try{const x=JSON.parse(localStorage.getItem(k)||'null');return x??fallback}catch{return fallback}}
 function history(){const h=readStore(historyKey,[]);return Array.isArray(h)?h.filter(e=>e&&e.data&&typeof e.at==='string').slice(0,1000):[]}
 function recordPriceHistory(data,at){const h=history();h.unshift({id:at+'-'+Math.random().toString(36).slice(2,9),at,data:{...data,photo:''}});try{localStorage.setItem(historyKey,JSON.stringify(h.slice(0,1000)));renderStore()}catch{alert('محصول ذخیره شد، ولی فضای تاریخچه پر است. از داده‌ها نسخه پشتیبان بگیر.')}} 
-function storeRows(){const h=history();const known=new Set(h.map(e=>e.data.sku||e.data.name));const legacy=saved().filter(e=>!known.has(e.data.sku||e.data.name)).map((e,i)=>({id:'saved-'+i+'-'+e.at,at:e.at,data:e.data}));return [...h,...legacy].sort((a,b)=>b.at.localeCompare(a.at))}
+function identity(d){const collection=String(d.collection||'بدون مجموعه').trim()||'بدون مجموعه',category=String(d.category||'بدون دسته').trim()||'بدون دسته';const name=String(d.sku||d.name||'بدون نام').trim().toLocaleLowerCase('fa-IR');return JSON.stringify([collection,category,name])}
+function storeRows(){const h=history(),known=new Set(h.map(e=>identity(e.data)));const legacy=saved().filter(e=>!known.has(identity(e.data))).map((e,i)=>({id:'saved-'+i+'-'+e.at,at:e.at,data:e.data}));return [...h,...legacy].sort((a,b)=>b.at.localeCompare(a.at))}
 const money=n=>fmt(n)+' تومان';
 function renderStore(){
  const month=$('storeMonth').value;if(!month)return;
  const sales=readStore(salesKey,{}),fixed=readStore(fixedKey,{}),monthly=Number(fixed[month])||0;
  $('storeFixed').value=monthly;
- const container=$('storeHistory');container.replaceChildren();
+ const container=$('storeHistory');container.replaceChildren();const groupPanel=$('storeGroups');groupPanel.replaceChildren();const groupTotals=new Map();const perItem=new Map();
  let revenue=0,variable=0,fees=0,shown=0;
  for(const entry of storeRows()){
   const p=priceFor(entry.data);if(!p.valid)continue;
+  const id=identity(entry.data);let group=perItem.get(id);if(!group){group=document.createElement('details');group.className='card';const summary=document.createElement('summary');summary.textContent=(entry.data.collection||'بدون مجموعه')+' ← '+(entry.data.category||'بدون دسته')+' ← '+(entry.data.name||'بدون نام')+' ('+(entry.data.sku||'بدون کد')+')';group.append(summary);perItem.set(id,group);container.append(group)}
   const row=document.createElement('div');row.className='saved';row.style.display='block';
   const title=document.createElement('b');title.textContent=(entry.data.name||'بدون نام')+' · '+new Date(entry.at).toLocaleDateString('fa-IR');
   const detail=document.createElement('p');detail.textContent='هزینه واحد: '+money(p.total)+' | نقدی: '+money(p.cash)+(p.installment?' | اقساط نظری: '+money(p.bnpl):'');
@@ -157,19 +159,22 @@ function renderStore(){
    const price=entry.data.actual&&Number(entry.data.actual)>0?Number(entry.data.actual):p.cash;
    const fee=mode==='bnpl'?price*(1-(1-(Number(entry.data.fee)||0)/100*(1+(entry.data.recover?0:(Number(entry.data.vat)||0)/100)))):0;
    revenue+=qty*price;variable+=qty*p.total;fees+=qty*fee;
+   const collection=String(entry.data.collection||'بدون مجموعه'),category=String(entry.data.category||'بدون دسته');
+   for(const [level,title] of [['collection',collection],['category',collection+' / '+category],['item',collection+' / '+category+' / '+String(entry.data.sku||entry.data.name||'بدون نام')]]){const k=level+'|'+title,old=groupTotals.get(k)||{level,title,qty:0,revenue:0,cost:0,fees:0};old.qty+=qty;old.revenue+=qty*price;old.cost+=qty*p.total;old.fees+=qty*fee;groupTotals.set(k,old)}
   }
-  container.append(row);shown++;
+  group.append(row);shown++;
  }
  if(!shown){container.textContent='هنوز محاسبه قیمت ذخیره‌شده‌ای نداری. اول در «محاسبه» یک محصول ذخیره کن.'}
+ const level=$('storeGroup').value;for(const g of [...groupTotals.values()].filter(x=>x.level===level).sort((a,b)=>a.title.localeCompare(b.title,'fa'))){const el=document.createElement('div');el.className='saved';el.style.display='block';const title=document.createElement('strong');title.textContent=g.title;const detail=document.createElement('p');detail.textContent='تعداد فروش: '+fmt(g.qty)+' | درآمد: '+money(g.revenue)+' | هزینه مستقیم: '+money(g.cost)+' | کارمزد: '+money(g.fees)+' | مانده پیش از هزینه ثابت: '+money(g.revenue-g.cost-g.fees);el.append(title,detail);groupPanel.append(el)}
  const gross=revenue-variable-fees,net=gross-monthly;
  for(const [id,val] of Object.entries({storeRevenue:revenue,storeVariable:variable,storeFee:fees,storeGross:gross,storeFixedOut:monthly,storeNet:net}))$(id).textContent=money(val);
  $('storeNet').style.color=net<0?'#b34242':'#176344';
 }
 $('storeMonth').value=new Date().toISOString().slice(0,7);
-$('storeMonth').addEventListener('change',renderStore);
+$('storeMonth').addEventListener('change',renderStore);$('storeGroup').addEventListener('change',renderStore);
 $('storeFixed').addEventListener('change',()=>{const x=Number($('storeFixed').value);if(!Number.isFinite(x)||x<0){alert('هزینه نمی‌تواند منفی باشد');renderStore();return}const a=readStore(fixedKey,{});a[$('storeMonth').value]=x;localStorage.setItem(fixedKey,JSON.stringify(a));renderStore()});
-$('storeExport').onclick=()=>{const m=$('storeMonth').value;const s=readStore(salesKey,{});const rows=[['نام محصول','تاریخ محاسبه','روش فروش','تعداد','قیمت واحد تومان','هزینه مستقیم واحد تومان','کارمزد واحد تومان','جمع فروش','جمع هزینه مستقیم','جمع کارمزد']];
-for(const e of storeRows()){const p=priceFor(e.data);if(!p.valid)continue;for(const mode of p.installment?['cash','bnpl']:['cash']){const q=Number(s[m+'|'+e.id+'|'+mode])||0;if(!q)continue;const price=Number(e.data.actual)>0?Number(e.data.actual):p.cash,fee=mode==='bnpl'?price*(Number(e.data.fee)||0)/100*(1+(e.data.recover?0:(Number(e.data.vat)||0)/100)):0;rows.push([e.data.name||'',e.at,mode==='cash'?'نقدی':'اسنپ‌پی',q,price,p.total,fee,q*price,q*p.total,q*fee])}}
+$('storeExport').onclick=()=>{const m=$('storeMonth').value;const s=readStore(salesKey,{});const rows=[['نام محصول','کالکشن','دسته','تاریخ محاسبه','روش فروش','تعداد','قیمت واحد تومان','هزینه مستقیم واحد تومان','کارمزد واحد تومان','جمع فروش','جمع هزینه مستقیم','جمع کارمزد']];
+for(const e of storeRows()){const p=priceFor(e.data);if(!p.valid)continue;for(const mode of p.installment?['cash','bnpl']:['cash']){const q=Number(s[m+'|'+e.id+'|'+mode])||0;if(!q)continue;const price=Number(e.data.actual)>0?Number(e.data.actual):p.cash,fee=mode==='bnpl'?price*(Number(e.data.fee)||0)/100*(1+(e.data.recover?0:(Number(e.data.vat)||0)/100)):0;rows.push([e.data.name||'',e.data.collection||'',e.data.category||'',e.at,mode='cash'?'نقدی':'اسنپ‌پی',q,price,p.total,fee,q*price,q*p.total,q*fee])}}
 rows.push(['هزینه ثابت ماه',m,'','','','','', '',Number($('storeFixed').value)||0,'']);const csv='\ufeff'+rows.map(row=>row.map(v=>{let cell=String(v??'');if(/^[\s]*[=+@-]/.test(cell))cell="'"+cell;return '"'+cell.replaceAll('"','""')+'"'}).join(',')).join('\r\n');download('mouher-store-'+m+'.csv',csv,'text/csv;charset=utf-8')};
 
 render();renderStore();calculate();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
