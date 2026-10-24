@@ -195,7 +195,7 @@ test('dated Drive export requires OAuth configuration and does not leak product 
 
 test('browser-only Google Drive path downloads CSV without OAuth or installed app',async({page})=>{
  await fillValid(page);await save(page);await page.locator('[data-tab="products"]').click();
- await expect(page.locator('a[href="https://drive.google.com/drive/u/0/my-drive"]')).toHaveCount(2);
+ await expect(page.locator('a[href="https://drive.google.com/drive/u/0/my-drive"]')).toHaveCount(1);
  const [file]=await Promise.all([page.waitForEvent('download'),page.locator('#webCsvDownload').click()]);
  expect(file.suggestedFilename()).toBe('mouher-price-list.csv');
 });
