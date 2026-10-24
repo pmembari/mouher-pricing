@@ -227,3 +227,11 @@ test('security: malformed and oversized JSON imports preserve existing products'
  await expect(page.locator('#productList .saved')).toHaveCount(1);
  await expect(page.locator('#productList')).toContainText('پیراهن موهر');
 });
+
+test('simple Google Drive onboarding has sign-in button and no developer credential field',async({page})=>{
+ await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#driveCsv')).toBeVisible();
+ await expect(page.locator('#googleClientId')).toHaveCount(0);
+ await page.locator('#driveCsv').click();
+ await expect(page.locator('#driveStatus')).toContainText('مدیر سایت');
+});
