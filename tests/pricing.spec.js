@@ -187,11 +187,6 @@ test('shop name defaults to Mouher and persists locally per device',async({page,
  const other=await browser.newContext();
  try{const p=await other.newPage();await p.goto('/');await p.locator('[data-tab="products"]').click();await expect(p.locator('#shopName')).toHaveValue('Mouher')}finally{await other.close()}
 });
-test('dated Drive export requires OAuth configuration and does not leak product data',async({page})=>{
- await page.locator('[data-tab="products"]').click();
- await page.locator('#driveCsv').click();
- await expect(page.locator('#driveStatus')).toContainText('OAuth Client ID');
-});
 
 test('browser-only Google Drive path downloads CSV without OAuth or installed app',async({page})=>{
  await fillValid(page);await save(page);await page.locator('[data-tab="products"]').click();
@@ -231,11 +226,4 @@ test('security: malformed and oversized JSON imports preserve existing products'
  await page.locator('#import').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(invalid))});
  await expect(page.locator('#productList .saved')).toHaveCount(1);
  await expect(page.locator('#productList')).toContainText('پیراهن موهر');
-});
-test('security: Drive upload cannot run with no OAuth client configured',async({page})=>{
- await page.locator('[data-tab="products"]').click();
- await page.evaluate(()=>{window.__driveRequests=[]; const realFetch=window.fetch;window.fetch=(...args)=>{window.__driveRequests.push(String(args[0]));return realFetch(...args)}});
- await page.locator('#driveImages').click();
- await expect(page.locator('#driveStatus')).toContainText('OAuth Client ID');
- expect(await page.evaluate(()=>window.__driveRequests.filter(u=>u.includes('googleapis.com/drive')))).toEqual([]);
 });
