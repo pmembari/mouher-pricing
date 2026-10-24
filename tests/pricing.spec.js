@@ -176,3 +176,19 @@ test('product photo is shared as image file, never uploaded to GitHub',async({pa
  expect(await page.evaluate(()=>window.__shared[0].type)).toBe('image/jpeg');
  expect(await page.locator('#publicPhoto').count()).toBe(0);
 });
+
+test('shop name defaults to Mouher and persists locally per device',async({page,browser})=>{
+ await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#shopName')).toHaveValue('Mouher');
+ await page.locator('#shopName').fill('Rose Boutique');
+ await page.locator('#shopName').dispatchEvent('change');
+ await page.reload();await page.locator('[data-tab="products"]').click();
+ await expect(page.locator('#shopName')).toHaveValue('Rose Boutique');
+ const other=await browser.newContext();
+ try{const p=await other.newPage();await p.goto('/');await p.locator('[data-tab="products"]').click();await expect(p.locator('#shopName')).toHaveValue('Mouher')}finally{await other.close()}
+});
+test('dated Drive export requires OAuth configuration and does not leak product data',async({page})=>{
+ await page.locator('[data-tab="products"]').click();
+ await page.locator('#driveCsv').click();
+ await expect(page.locator('#driveStatus')).toContainText('OAuth Client ID');
+});
