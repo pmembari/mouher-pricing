@@ -313,3 +313,20 @@ test('store groups unique item under category and collection without multiplying
  await expect(page.locator('#storeGroups')).toContainText('MH-01');
  await expect(page.locator('#storeRevenue')).toContainText('۲۷٬۹۰۰٬۰۰۰');
 });
+
+test('history recommends a unique product price and exports only after approval',async({page})=>{
+ await page.locator('#installmentEnabled').uncheck();
+ await page.locator('#collection').fill('پاییز ۱۴۰۵');
+ await page.locator('#category').fill('پالتو');
+ await page.locator('#name').fill('پالتو قهوه‌ای');
+ await page.locator('#sku').fill('MH-COAT-01');
+ await save(page);
+ await page.locator('[data-tab="store"]').click();
+ await expect(page.locator('#recommendationList')).toContainText('۲٬۷۹۰٬۰۰۰');
+ await expect(page.locator('#recommendationList')).toContainText('فقط یک نسخه قیمت داریم');
+ await page.locator('#approvedPriceExport').click();
+ await expect(page.locator('#publishStatus')).toContainText('هنوز قیمتی تأیید نشده');
+ page.once('dialog',d=>d.accept());
+ await page.locator('#recommendationList button').first().click();
+ await expect(page.locator('#recommendationList')).toContainText('آخرین تأیید محلی');
+});
