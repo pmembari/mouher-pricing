@@ -125,3 +125,8 @@ $('searchProducts').addEventListener('input',render);
 
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(file.size>8*1024*1024||data.version!==1||!Array.isArray(data.products)||data.products.length>500||!data.products.every(x=>x&&x.data&&typeof x.data==='object'&&!Array.isArray(x.data)&&typeof x.data.name==='string'&&x.data.name.length<=200&&(!x.data.sku||typeof x.data.sku==='string'&&x.data.sku.length<=100)&&(!x.data.photo||typeof x.data.photo==='string'&&x.data.photo.length<=160000&&x.data.photo.startsWith('data:image/jpeg;base64,'))&&typeof x.at==='string'&&x.at.length<=100))throw Error();if(confirm('محصولات فعلی با نسخه پشتیبان جایگزین شوند؟'))persist(data.products)}catch{alert('نسخه پشتیبان نامعتبر است')}e.target.value=''};
 render();calculate();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+// Single illustrated guide: embed the same canonical page without double scrolling.
+const guideFrame=document.getElementById('guideFrame');
+window.addEventListener('message',event=>{if(event.origin!==location.origin||event.source!==guideFrame?.contentWindow||event.data?.type!=='mouher-guide-height')return;const height=Number(event.data.height);if(Number.isFinite(height)&&height>0&&height<100000)guideFrame.style.height=Math.ceil(height+12)+'px'});
+if(location.hash==='#guide')show('guide');
+window.addEventListener('hashchange',()=>{if(location.hash==='#guide')show('guide');else if(location.hash==='#calculator')show('calculator')});
