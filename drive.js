@@ -4,6 +4,10 @@
  const status=(message)=>{$('driveStatus').textContent=message};
  const selectedShop=()=>($('shopName').value.trim().replace(/[\\/\x00-\x1f]/g,' ').slice(0,70)||'Mouher');
  let token=null,expires=0;
+ const disconnect=$('driveDisconnect');
+ function clearSession(){token=null;expires=0;disconnect.hidden=true;}
+ disconnect.addEventListener('click',()=>{const old=token;clearSession();if(old&&window.google?.accounts?.oauth2?.revoke)google.accounts.oauth2.revoke(old,()=>{});status('اتصال این جلسه قطع شد. اطلاعات ورود گوگل در این برنامه ذخیره نشده است.');});
+ window.addEventListener('pagehide',clearSession);
  function authenticate(){
   return new Promise((resolve,reject)=>{
    const clientId=String(window.MOUHER_GOOGLE_CLIENT_ID||'').trim();
@@ -15,12 +19,13 @@
     callback:response=>{
      if(response.error)return reject(Error(response.error));
      token=response.access_token;
+     disconnect.hidden=false;
      expires=Date.now()+(Number(response.expires_in)||3500)*1000;
      resolve(token);
     },
     error_callback:()=>reject(Error('پنجره تأیید گوگل بسته یا مسدود شد. در Safari سایت را مستقیم باز کنید.'))
    });
-   client.requestAccessToken({prompt:'consent'});
+   client.requestAccessToken({prompt:'select_account'});
   });
  }
  async function request(url,options={}){
@@ -28,6 +33,7 @@
   headers.set('Authorization','Bearer '+token);
   const res=await fetch(url,{...options,headers,cache:'no-store'});
   if(!res.ok){
+   if(res.status===401)clearSession();
    let detail='';
    try{detail=(await res.json()).error?.message||''}catch{}
    throw Error('Google Drive API '+res.status+(detail?': '+detail:''));
